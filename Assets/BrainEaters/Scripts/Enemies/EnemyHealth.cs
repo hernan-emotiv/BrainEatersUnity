@@ -14,6 +14,7 @@ namespace BrainEaters.Enemies
 
         public float CurrentHealth { get; private set; }
         public bool IsAlive { get; private set; }
+        public EnemyConfig EnemyConfig { get; private set; }
 
         private void Awake()
         {
@@ -27,6 +28,7 @@ namespace BrainEaters.Enemies
                 return;
             }
 
+            EnemyConfig = enemyConfig;
             maxHealth = enemyConfig.MaxHealth;
             ResetState();
         }

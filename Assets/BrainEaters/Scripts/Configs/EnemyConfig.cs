@@ -5,6 +5,8 @@ namespace BrainEaters.Configs
     [CreateAssetMenu(fileName = "EnemyConfig", menuName = "Brain Eaters/Configs/Enemy Config")]
     public class EnemyConfig : ScriptableObject
     {
+        [SerializeField] private EnemyType enemyType = EnemyType.Zombie;
+        [SerializeField] private string displayName = "Zombie";
         [SerializeField] private float maxHealth = 1f;
         [SerializeField] private float moveSpeed = 3.5f;
         [SerializeField] private float stopDistance = 1.25f;
@@ -12,6 +14,8 @@ namespace BrainEaters.Configs
         [SerializeField] private float attackDamage = 1f;
         [SerializeField] private float attackCooldownSeconds = 1.1f;
 
+        public EnemyType EnemyType => enemyType;
+        public string DisplayName => string.IsNullOrWhiteSpace(displayName) ? enemyType.ToString() : displayName;
         public float MaxHealth => maxHealth;
         public float MoveSpeed => moveSpeed;
         public float StopDistance => stopDistance;

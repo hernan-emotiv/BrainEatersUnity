@@ -11,6 +11,7 @@ namespace BrainEaters.Player
 
         public event Action<PlayerHealth> HealthChanged;
         public event Action<float> Damaged;
+        public event Action<PlayerHealth> Died;
 
         public float CurrentHealth { get; private set; }
         public float MaxHealth => maxHealth;
@@ -55,6 +56,7 @@ namespace BrainEaters.Player
         private void HandleDeath()
         {
             IsAlive = false;
+            Died?.Invoke(this);
 
             if (disableControlsOnDeath && playerController != null)
             {

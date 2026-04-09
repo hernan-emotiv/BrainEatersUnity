@@ -1,0 +1,237 @@
+using BrainEaters.GameFlow;
+using TMPro;
+using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.UI;
+
+namespace BrainEaters.UI
+{
+    public class EndGamePanelController : MonoBehaviour
+    {
+        [SerializeField] private GameManager gameManager;
+        [SerializeField] private GameObject winPanel;
+        [SerializeField] private GameObject losePanel;
+        [SerializeField] private TMP_Text winTitleText;
+        [SerializeField] private TMP_Text winReportText;
+        [SerializeField] private TMP_Text loseTitleText;
+        [SerializeField] private TMP_Text loseReportText;
+        [SerializeField] private Button winRetryButton;
+        [SerializeField] private Button loseRetryButton;
+        [SerializeField] private Button winBackToMenuButton;
+        [SerializeField] private Button loseBackToMenuButton;
+
+        private void Awake()
+        {
+            ResolveReferences();
+            SetPanelsVisible(false, false);
+            BindButtons();
+            Debug.Log($"EndGamePanelController Awake. GameManager assigned: {gameManager != null}.", this);
+        }
+
+        private void OnEnable()
+        {
+            ResolveReferences();
+            BindButtons();
+
+            if (gameManager != null)
+            {
+                gameManager.StateChanged += HandleStateChanged;
+                gameManager.GameplayFinished += HandleGameplayFinished;
+                Debug.Log("EndGamePanelController subscribed to GameManager events.", this);
+            }
+            else
+            {
+                Debug.LogWarning("EndGamePanelController could not find a GameManager on enable.", this);
+            }
+        }
+
+        private void OnDisable()
+        {
+            if (gameManager != null)
+            {
+                gameManager.StateChanged -= HandleStateChanged;
+                gameManager.GameplayFinished -= HandleGameplayFinished;
+            }
+        }
+
+        private void OnValidate()
+        {
+            ResolveReferences();
+        }
+
+        private void Update()
+        {
+            if (gameManager == null)
+            {
+                return;
+            }
+
+            if (gameManager.CurrentState != GameplayState.Won && gameManager.CurrentState != GameplayState.Lost)
+            {
+                return;
+            }
+
+            Keyboard keyboard = Keyboard.current;
+            if (keyboard == null)
+            {
+                return;
+            }
+
+            if (keyboard.rKey.wasPressedThisFrame)
+            {
+                Debug.Log("Keyboard retry requested with R.", this);
+                HandleRetryPressed();
+            }
+            else if (keyboard.escapeKey.wasPressedThisFrame)
+            {
+                Debug.Log("Keyboard back to menu requested with Escape.", this);
+                HandleBackToMenuPressed();
+            }
+        }
+
+        private void HandleGameplayFinished(GameplayReport report)
+        {
+            Debug.Log($"EndGamePanelController received GameplayFinished. Result: {report.ResultState}.", this);
+            bool didWin = report.ResultState == GameplayState.Won;
+            SetPanelsVisible(didWin, !didWin);
+
+            string reportText = BuildReportText(report);
+
+            if (didWin)
+            {
+                if (winTitleText != null)
+                {
+                    winTitleText.text = "YOU SURVIVED";
+                }
+
+                if (winReportText != null)
+                {
+                    winReportText.text = reportText;
+                }
+            }
+            else
+            {
+                if (loseTitleText != null)
+                {
+                    loseTitleText.text = "YOU WERE OVERWHELMED";
+                }
+
+                if (loseReportText != null)
+                {
+                    loseReportText.text = reportText;
+                }
+            }
+        }
+
+        private void HandleStateChanged(GameplayState gameplayState)
+        {
+            if (gameplayState == GameplayState.Initializing || gameplayState == GameplayState.Running)
+            {
+                SetPanelsVisible(false, false);
+            }
+        }
+
+        private string BuildReportText(GameplayReport report)
+        {
+            System.Text.StringBuilder builder = new System.Text.StringBuilder();
+            builder.AppendLine($"Total Enemies Eliminated: {report.TotalEnemiesEliminated}");
+
+            foreach (GameplayKillStat killStat in report.KillStats)
+            {
+                builder.AppendLine($"{killStat.DisplayName}: {killStat.Count}");
+            }
+
+            builder.AppendLine($"Damage Received: {report.DamageReceived:0}");
+            builder.Append($"Time Survived: {FormatTime(report.ElapsedSeconds)} / {FormatTime(report.TargetDurationSeconds)}");
+            return builder.ToString();
+        }
+
+        private void BindButtons()
+        {
+            Debug.Log(
+                $"Binding end game buttons. " +
+                $"WinRetry: {winRetryButton != null}, " +
+                $"LoseRetry: {loseRetryButton != null}, " +
+                $"WinBack: {winBackToMenuButton != null}, " +
+                $"LoseBack: {loseBackToMenuButton != null}.",
+                this);
+
+            BindButton(winRetryButton, HandleRetryPressed);
+            BindButton(loseRetryButton, HandleRetryPressed);
+            BindButton(winBackToMenuButton, HandleBackToMenuPressed);
+            BindButton(loseBackToMenuButton, HandleBackToMenuPressed);
+        }
+
+        private static void BindButton(Button button, UnityEngine.Events.UnityAction callback)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            button.onClick.RemoveListener(callback);
+            button.onClick.AddListener(callback);
+        }
+
+        private void HandleRetryPressed()
+        {
+            Debug.Log("Retry button pressed.", this);
+            SetPanelsVisible(false, false);
+
+            if (gameManager != null)
+            {
+                Debug.Log("Retry button is calling GameManager.RetryLevel().", this);
+                gameManager.RetryLevel();
+            }
+            else
+            {
+                Debug.LogWarning("Retry button pressed but GameManager is missing.", this);
+            }
+        }
+
+        private void HandleBackToMenuPressed()
+        {
+            Debug.Log("Back to Menu button pressed.", this);
+            SetPanelsVisible(false, false);
+
+            if (gameManager != null)
+            {
+                Debug.Log("Back to Menu button is calling GameManager.BackToMenu().", this);
+                gameManager.BackToMenu();
+            }
+            else
+            {
+                Debug.LogWarning("Back to Menu button pressed but GameManager is missing.", this);
+            }
+        }
+
+        private void SetPanelsVisible(bool showWin, bool showLose)
+        {
+            if (winPanel != null)
+            {
+                winPanel.SetActive(showWin);
+            }
+
+            if (losePanel != null)
+            {
+                losePanel.SetActive(showLose);
+            }
+        }
+
+        private void ResolveReferences()
+        {
+            if (gameManager == null)
+            {
+                gameManager = FindFirstObjectByType<GameManager>();
+            }
+        }
+
+        private static string FormatTime(float timeSeconds)
+        {
+            int totalSeconds = Mathf.Max(0, Mathf.FloorToInt(timeSeconds));
+            int minutes = totalSeconds / 60;
+            int seconds = totalSeconds % 60;
+            return $"{minutes:00}:{seconds:00}";
+        }
+    }
+}

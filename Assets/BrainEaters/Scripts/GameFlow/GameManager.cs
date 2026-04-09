@@ -9,6 +9,9 @@ namespace BrainEaters.GameFlow
 {
     public class GameManager : MonoBehaviour
     {
+        public event System.Action<GameplayState> StateChanged;
+        public event System.Action<GameplayReport> GameplayFinished;
+
         [SerializeField] private LevelConfig levelConfig;
         [SerializeField] private PlayerController playerController;
         [SerializeField] private SpawnManager spawnManager;
@@ -16,15 +19,21 @@ namespace BrainEaters.GameFlow
         [SerializeField] private Transform levelRootParent;
 
         private LevelContext currentLevelInstance;
-
+        private PlayerHealth cachedPlayerHealth;
         private float elapsedSurvivalTime;
+        private float damageReceived;
+        private int enemiesEliminated;
+        private readonly Dictionary<EnemyType, int> enemyKillCounts = new Dictionary<EnemyType, int>();
+        private readonly Dictionary<EnemyType, string> enemyKillLabels = new Dictionary<EnemyType, string>();
         private bool levelRunning;
+        private GameplayState currentState = GameplayState.None;
 
         public LevelConfig LevelConfig => levelConfig;
         public float ElapsedSurvivalTime => elapsedSurvivalTime;
         public float LevelDurationSeconds => levelConfig != null ? levelConfig.SurvivalDurationSeconds : 0f;
         public float RemainingSurvivalTime => Mathf.Max(0f, LevelDurationSeconds - elapsedSurvivalTime);
         public bool IsLevelRunning => levelRunning;
+        public GameplayState CurrentState => currentState;
 
         private void Awake()
         {
@@ -36,9 +45,14 @@ namespace BrainEaters.GameFlow
             StartLevel(levelConfig);
         }
 
+        private void OnDestroy()
+        {
+            UnsubscribeFromGameplayEvents();
+        }
+
         private void Update()
         {
-            if (!levelRunning || levelConfig == null)
+            if (!levelRunning || levelConfig == null || currentState != GameplayState.Running)
             {
                 return;
             }
@@ -50,11 +64,15 @@ namespace BrainEaters.GameFlow
                 return;
             }
 
+            if (cachedPlayerHealth != null && !cachedPlayerHealth.IsAlive)
+            {
+                EndGameplay(GameplayState.Lost);
+                return;
+            }
+
             if (elapsedSurvivalTime >= levelConfig.SurvivalDurationSeconds)
             {
-                levelRunning = false;
-                spawnManager.SetSpawningEnabled(false);
-                Debug.Log($"Level complete. Survived {levelConfig.SurvivalDurationSeconds:0.0} seconds.", this);
+                EndGameplay(cachedPlayerHealth != null && cachedPlayerHealth.IsAlive ? GameplayState.Won : GameplayState.Lost);
             }
         }
 
@@ -67,6 +85,8 @@ namespace BrainEaters.GameFlow
         public void InitializeLevel()
         {
             ResolveReferences();
+            SetState(GameplayState.Initializing);
+            UnsubscribeFromGameplayEvents();
 
             if (levelConfig == null)
             {
@@ -122,16 +142,21 @@ namespace BrainEaters.GameFlow
                 return;
             }
 
-            PlayerHealth playerHealth = playerController.GetComponent<PlayerHealth>();
-            if (playerHealth != null)
+            cachedPlayerHealth = playerController.GetComponent<PlayerHealth>();
+            if (cachedPlayerHealth != null)
             {
                 playerController.enabled = true;
-                playerHealth.ResetState();
+                cachedPlayerHealth.ResetState();
             }
 
             spawnManager.Initialize(levelConfig, playerController.transform, new List<SpawnPoint>(currentLevelInstance.SpawnPoints));
+            SubscribeToGameplayEvents();
+            damageReceived = 0f;
+            enemiesEliminated = 0;
+            ResetKillTracking();
             elapsedSurvivalTime = 0f;
             levelRunning = true;
+            SetState(GameplayState.Running);
 
             Debug.Log($"Initialized level: {levelConfig.name}", this);
         }
@@ -175,6 +200,151 @@ namespace BrainEaters.GameFlow
             currentLevelInstance = Instantiate(levelConfig.LevelPrefab, Vector3.zero, Quaternion.identity, levelRootParent);
             currentLevelInstance.name = $"{levelConfig.LevelPrefab.name}_Instance";
             currentLevelInstance.RefreshSpawnPointsIfNeeded();
+        }
+
+        private void EndGameplay(GameplayState resultState)
+        {
+            if (currentState == GameplayState.Won || currentState == GameplayState.Lost)
+            {
+                return;
+            }
+
+            levelRunning = false;
+
+            if (spawnManager != null)
+            {
+                spawnManager.SetSpawningEnabled(false);
+            }
+
+            SetState(resultState);
+
+            GameplayReport report = new GameplayReport(
+                resultState,
+                enemiesEliminated,
+                damageReceived,
+                elapsedSurvivalTime,
+                LevelDurationSeconds,
+                BuildKillStats());
+
+            GameplayFinished?.Invoke(report);
+            Debug.Log($"Gameplay finished with state {resultState}. Kills: {enemiesEliminated}, damage received: {damageReceived:0.##}.", this);
+        }
+
+        public void RetryLevel()
+        {
+            InitializeLevel();
+        }
+
+        public void BackToMenu()
+        {
+            Debug.Log("Back to menu requested. Not implemented yet.", this);
+        }
+
+        private void SetState(GameplayState newState)
+        {
+            if (currentState == newState)
+            {
+                return;
+            }
+
+            currentState = newState;
+            StateChanged?.Invoke(currentState);
+        }
+
+        private void SubscribeToGameplayEvents()
+        {
+            if (cachedPlayerHealth != null)
+            {
+                cachedPlayerHealth.Damaged += HandlePlayerDamaged;
+                cachedPlayerHealth.Died += HandlePlayerDied;
+            }
+
+            if (spawnManager != null)
+            {
+                spawnManager.EnemyEliminated += HandleEnemyEliminated;
+            }
+        }
+
+        private void UnsubscribeFromGameplayEvents()
+        {
+            if (cachedPlayerHealth != null)
+            {
+                cachedPlayerHealth.Damaged -= HandlePlayerDamaged;
+                cachedPlayerHealth.Died -= HandlePlayerDied;
+            }
+
+            if (spawnManager != null)
+            {
+                spawnManager.EnemyEliminated -= HandleEnemyEliminated;
+            }
+        }
+
+        private void ResetKillTracking()
+        {
+            enemyKillCounts.Clear();
+            enemyKillLabels.Clear();
+
+            if (levelConfig == null)
+            {
+                return;
+            }
+
+            foreach (LevelEnemyDefinition definition in levelConfig.EnemyTypes)
+            {
+                if (definition == null || definition.EnemyConfig == null)
+                {
+                    continue;
+                }
+
+                EnemyType enemyType = definition.EnemyConfig.EnemyType;
+                if (!enemyKillCounts.ContainsKey(enemyType))
+                {
+                    enemyKillCounts.Add(enemyType, 0);
+                    enemyKillLabels.Add(enemyType, definition.EnemyConfig.DisplayName);
+                }
+            }
+        }
+
+        private List<GameplayKillStat> BuildKillStats()
+        {
+            List<GameplayKillStat> stats = new List<GameplayKillStat>(enemyKillCounts.Count);
+            foreach (KeyValuePair<EnemyType, int> entry in enemyKillCounts)
+            {
+                string displayName = enemyKillLabels.TryGetValue(entry.Key, out string label) ? label : entry.Key.ToString();
+                stats.Add(new GameplayKillStat(entry.Key, displayName, entry.Value));
+            }
+
+            stats.Sort((left, right) => left.EnemyType.CompareTo(right.EnemyType));
+            return stats;
+        }
+
+        private void HandlePlayerDamaged(float amount)
+        {
+            damageReceived += amount;
+        }
+
+        private void HandlePlayerDied(PlayerHealth _)
+        {
+            EndGameplay(GameplayState.Lost);
+        }
+
+        private void HandleEnemyEliminated(EnemyConfig enemyConfig)
+        {
+            enemiesEliminated++;
+
+            if (enemyConfig == null)
+            {
+                return;
+            }
+
+            EnemyType enemyType = enemyConfig.EnemyType;
+            if (!enemyKillCounts.ContainsKey(enemyType))
+            {
+                enemyKillCounts.Add(enemyType, 0);
+                enemyKillLabels[enemyType] = enemyConfig.DisplayName;
+            }
+
+            enemyKillCounts[enemyType]++;
         }
     }
 }

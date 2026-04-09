@@ -7,6 +7,8 @@ namespace BrainEaters.Spawning
 {
     public class SpawnManager : MonoBehaviour
     {
+        public event System.Action<EnemyConfig> EnemyEliminated;
+
         private readonly List<EnemyController> activeEnemies = new List<EnemyController>();
         private Transform playerTarget;
         private List<SpawnPoint> spawnPoints = new List<SpawnPoint>();
@@ -129,6 +131,8 @@ namespace BrainEaters.Spawning
             {
                 activeEnemies.Remove(enemyController);
             }
+
+            EnemyEliminated?.Invoke(enemyHealth.EnemyConfig);
         }
 
         private LevelEnemyDefinition GetNextEnemyDefinition()
