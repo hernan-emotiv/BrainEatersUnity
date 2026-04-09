@@ -1,3 +1,4 @@
+using BrainEaters.Configs;
 using UnityEngine;
 
 namespace BrainEaters.Enemies
@@ -9,6 +10,7 @@ namespace BrainEaters.Enemies
         [SerializeField] private EnemyMovement enemyMovement;
         [SerializeField] private EnemyHealth enemyHealth;
         [SerializeField] private Transform target;
+        [SerializeField] private EnemyConfig enemyConfig;
 
         private void Awake()
         {
@@ -20,9 +22,20 @@ namespace BrainEaters.Enemies
             ResolveReferences();
         }
 
-        public void Initialize(Transform targetTransform)
+        public void Initialize(Transform targetTransform, EnemyConfig config)
         {
             target = targetTransform;
+            enemyConfig = config;
+
+            if (enemyMovement != null)
+            {
+                enemyMovement.Configure(enemyConfig);
+            }
+
+            if (enemyHealth != null)
+            {
+                enemyHealth.Configure(enemyConfig);
+            }
         }
 
         private void Update()

@@ -1,0 +1,146 @@
+using System.Collections.Generic;
+using BrainEaters.Cameras;
+using BrainEaters.Configs;
+using BrainEaters.Player;
+using BrainEaters.Spawning;
+using UnityEngine;
+
+namespace BrainEaters.GameFlow
+{
+    public class GameManager : MonoBehaviour
+    {
+        [SerializeField] private LevelConfig levelConfig;
+        [SerializeField] private PlayerController playerController;
+        [SerializeField] private SpawnManager spawnManager;
+        [SerializeField] private CameraFollow cameraFollow;
+        [SerializeField] private List<SpawnPoint> spawnPoints = new List<SpawnPoint>();
+
+        private float elapsedSurvivalTime;
+        private bool levelRunning;
+
+        public LevelConfig LevelConfig => levelConfig;
+        public float ElapsedSurvivalTime => elapsedSurvivalTime;
+
+        private void Awake()
+        {
+            ResolveReferences();
+        }
+
+        private void Start()
+        {
+            StartLevel(levelConfig);
+        }
+
+        private void Update()
+        {
+            if (!levelRunning || levelConfig == null)
+            {
+                return;
+            }
+
+            elapsedSurvivalTime += Time.deltaTime;
+
+            if (levelConfig.GameModeType != GameModeType.Survival)
+            {
+                return;
+            }
+
+            if (elapsedSurvivalTime >= levelConfig.SurvivalDurationSeconds)
+            {
+                levelRunning = false;
+                spawnManager.SetSpawningEnabled(false);
+                Debug.Log($"Level complete. Survived {levelConfig.SurvivalDurationSeconds:0.0} seconds.", this);
+            }
+        }
+
+        public void StartLevel(LevelConfig config)
+        {
+            levelConfig = config;
+            InitializeLevel();
+        }
+
+        public void InitializeLevel()
+        {
+            ResolveReferences();
+
+            if (levelConfig == null)
+            {
+                levelRunning = false;
+                Debug.LogError("GameManager requires a LevelConfig.", this);
+                return;
+            }
+
+            if (playerController == null)
+            {
+                levelRunning = false;
+                Debug.LogError("GameManager requires a PlayerController reference.", this);
+                return;
+            }
+
+            if (spawnManager == null)
+            {
+                levelRunning = false;
+                Debug.LogError("GameManager requires a SpawnManager reference.", this);
+                return;
+            }
+
+            if (levelConfig.SpawnConfig == null)
+            {
+                levelRunning = false;
+                Debug.LogError("LevelConfig requires a SpawnConfig.", this);
+                return;
+            }
+
+            if (cameraFollow != null)
+            {
+                cameraFollow.SetTarget(playerController.transform);
+                playerController.SetCamera(cameraFollow.transform);
+            }
+            else if (Camera.main != null)
+            {
+                playerController.SetCamera(Camera.main.transform);
+            }
+
+            if (spawnPoints.Count == 0)
+            {
+                spawnPoints.AddRange(FindObjectsByType<SpawnPoint>(FindObjectsSortMode.None));
+            }
+
+            if (spawnPoints.Count == 0)
+            {
+                levelRunning = false;
+                Debug.LogError("GameManager could not find any SpawnPoint objects in the scene.", this);
+                return;
+            }
+
+            spawnManager.Initialize(levelConfig, playerController.transform, spawnPoints);
+            elapsedSurvivalTime = 0f;
+            levelRunning = true;
+
+            Debug.Log($"Initialized level: {levelConfig.name}", this);
+        }
+
+        private void OnValidate()
+        {
+            ResolveReferences();
+        }
+
+        private void ResolveReferences()
+        {
+            if (playerController == null)
+            {
+                playerController = FindFirstObjectByType<PlayerController>();
+            }
+
+            if (spawnManager == null)
+            {
+                spawnManager = FindFirstObjectByType<SpawnManager>();
+            }
+
+            if (cameraFollow == null)
+            {
+                cameraFollow = FindFirstObjectByType<CameraFollow>();
+            }
+        }
+    }
+}

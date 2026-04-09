@@ -1,3 +1,4 @@
+using BrainEaters.Configs;
 using UnityEngine;
 
 namespace BrainEaters.Enemies
@@ -7,6 +8,17 @@ namespace BrainEaters.Enemies
         [SerializeField] private float moveSpeed = 3.5f;
         [SerializeField] private float turnSpeed = 540f;
         [SerializeField] private float stopDistance = 1.25f;
+
+        public void Configure(EnemyConfig enemyConfig)
+        {
+            if (enemyConfig == null)
+            {
+                return;
+            }
+
+            moveSpeed = enemyConfig.MoveSpeed;
+            stopDistance = enemyConfig.StopDistance;
+        }
 
         public void Tick(Vector3 targetPosition, float deltaTime)
         {

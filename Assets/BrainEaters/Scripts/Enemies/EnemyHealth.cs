@@ -1,4 +1,5 @@
 using System;
+using BrainEaters.Configs;
 using BrainEaters.Core;
 using UnityEngine;
 
@@ -16,6 +17,17 @@ namespace BrainEaters.Enemies
 
         private void Awake()
         {
+            ResetState();
+        }
+
+        public void Configure(EnemyConfig enemyConfig)
+        {
+            if (enemyConfig == null)
+            {
+                return;
+            }
+
+            maxHealth = enemyConfig.MaxHealth;
             ResetState();
         }
 
