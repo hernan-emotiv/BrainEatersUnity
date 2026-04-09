@@ -7,10 +7,9 @@ namespace BrainEaters.Spawning
 {
     public class SpawnManager : MonoBehaviour
     {
-        [SerializeField] private Transform playerTarget;
-        [SerializeField] private List<SpawnPoint> spawnPoints = new List<SpawnPoint>();
-
         private readonly List<EnemyController> activeEnemies = new List<EnemyController>();
+        private Transform playerTarget;
+        private List<SpawnPoint> spawnPoints = new List<SpawnPoint>();
         private IReadOnlyList<LevelEnemyDefinition> enemyTypes;
         private SpawnConfig spawnConfig;
         private float nextSpawnTime;
@@ -55,9 +54,20 @@ namespace BrainEaters.Spawning
                 return;
             }
 
+            if (playerTarget == null)
+            {
+                Debug.LogError("SpawnManager requires a player target.", this);
+                return;
+            }
+
+            if (spawnPoints.Count == 0)
+            {
+                Debug.LogError("SpawnManager requires at least one spawn point.", this);
+                return;
+            }
+
             spawnConfig = levelConfig.SpawnConfig;
             enemyTypes = levelConfig.EnemyTypes;
-            RefreshSpawnPointsIfNeeded();
             nextSpawnIndex = 0;
             nextSpawnTime = Time.time + (spawnConfig != null ? spawnConfig.InitialDelaySeconds : 0f);
             spawningEnabled = spawnConfig != null;
@@ -82,6 +92,7 @@ namespace BrainEaters.Spawning
             EnemyController enemyInstance = Instantiate(definition.EnemyPrefab, spawnPoint.Position, spawnPoint.Rotation);
             enemyInstance.gameObject.SetActive(true);
             enemyInstance.Initialize(playerTarget, definition.EnemyConfig);
+            spawnPoint.PlaySpawnFeedback();
             activeEnemies.Add(enemyInstance);
 
             EnemyHealth enemyHealth = enemyInstance.GetComponent<EnemyHealth>();
@@ -150,17 +161,6 @@ namespace BrainEaters.Spawning
                     activeEnemies.RemoveAt(i);
                 }
             }
-        }
-
-        private void RefreshSpawnPointsIfNeeded()
-        {
-            if (spawnPoints.Count > 0)
-            {
-                return;
-            }
-
-            SpawnPoint[] discoveredPoints = FindObjectsByType<SpawnPoint>(FindObjectsSortMode.None);
-            spawnPoints.AddRange(discoveredPoints);
         }
     }
 }

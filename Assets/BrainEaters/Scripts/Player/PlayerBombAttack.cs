@@ -7,6 +7,7 @@ namespace BrainEaters.Player
     public class PlayerBombAttack : MonoBehaviour
     {
         [SerializeField] private Transform attackOrigin;
+        [SerializeField] private BombPulseVisual bombPulseVisual;
         [SerializeField] private float radius = 6f;
         [SerializeField] private float damage = 999f;
         [SerializeField] private float cooldownSeconds = 0.75f;
@@ -20,6 +21,11 @@ namespace BrainEaters.Player
             if (attackOrigin == null)
             {
                 attackOrigin = transform;
+            }
+
+            if (bombPulseVisual == null)
+            {
+                bombPulseVisual = GetComponent<BombPulseVisual>();
             }
         }
 
@@ -63,6 +69,11 @@ namespace BrainEaters.Player
             }
 
             nextReadyTime = Time.time + cooldownSeconds;
+            if (bombPulseVisual != null)
+            {
+                bombPulseVisual.Play(radius);
+            }
+
             Debug.Log($"Bomb triggered. Targets hit: {hitCount}.", this);
             return true;
         }

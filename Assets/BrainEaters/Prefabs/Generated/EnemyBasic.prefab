@@ -99,6 +99,7 @@ GameObject:
   - component: {fileID: 4765061152933759886}
   - component: {fileID: 8268890602280918233}
   - component: {fileID: 9137249950666637575}
+  - component: {fileID: 3057204579657641862}
   m_Layer: 0
   m_Name: EnemyBasic
   m_TagString: Untagged
@@ -186,5 +187,23 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   enemyMovement: {fileID: 4765061152933759886}
   enemyHealth: {fileID: 8268890602280918233}
+  enemyAttack: {fileID: 3057204579657641862}
   target: {fileID: 0}
   enemyConfig: {fileID: 0}
+--- !u!114 &3057204579657641862
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9108631818148869059}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae2a8d47dfcd24b30a50e7ac0a7dcd89, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  attackOrigin: {fileID: 0}
+  attackRange: 1.6
+  attackDamage: 10
+  attackCooldownSeconds: 1.1
+  attackVisualDurationSeconds: 0.18

@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   gameModeType: 0
   survivalDurationSeconds: 60
+  levelPrefab: {fileID: 7935985860799826945, guid: e657b464ca4e7453299d3ca497c31393, type: 3}
   spawnConfig: {fileID: 11400000, guid: 9f10f36438eaf41e89e90a3ecefbbe63, type: 2}
   enemyTypes:
-  - enemyPrefab: {fileID: 0}
+  - enemyPrefab: {fileID: 9137249950666637575, guid: dbb3365acc60047679278d185b293e7e, type: 3}
     enemyConfig: {fileID: 11400000, guid: bbf3e4311eb544976a8245c372744be7, type: 2}

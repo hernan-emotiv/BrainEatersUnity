@@ -13,13 +13,18 @@ namespace BrainEaters.GameFlow
         [SerializeField] private PlayerController playerController;
         [SerializeField] private SpawnManager spawnManager;
         [SerializeField] private CameraFollow cameraFollow;
-        [SerializeField] private List<SpawnPoint> spawnPoints = new List<SpawnPoint>();
+        [SerializeField] private Transform levelRootParent;
+
+        private LevelContext currentLevelInstance;
 
         private float elapsedSurvivalTime;
         private bool levelRunning;
 
         public LevelConfig LevelConfig => levelConfig;
         public float ElapsedSurvivalTime => elapsedSurvivalTime;
+        public float LevelDurationSeconds => levelConfig != null ? levelConfig.SurvivalDurationSeconds : 0f;
+        public float RemainingSurvivalTime => Mathf.Max(0f, LevelDurationSeconds - elapsedSurvivalTime);
+        public bool IsLevelRunning => levelRunning;
 
         private void Awake()
         {
@@ -91,6 +96,13 @@ namespace BrainEaters.GameFlow
                 return;
             }
 
+            if (levelConfig.LevelPrefab == null)
+            {
+                levelRunning = false;
+                Debug.LogError("LevelConfig requires a LevelPrefab.", this);
+                return;
+            }
+
             if (cameraFollow != null)
             {
                 cameraFollow.SetTarget(playerController.transform);
@@ -101,19 +113,23 @@ namespace BrainEaters.GameFlow
                 playerController.SetCamera(Camera.main.transform);
             }
 
-            if (spawnPoints.Count == 0)
-            {
-                spawnPoints.AddRange(FindObjectsByType<SpawnPoint>(FindObjectsSortMode.None));
-            }
+            InstantiateSelectedLevel();
 
-            if (spawnPoints.Count == 0)
+            if (currentLevelInstance == null || currentLevelInstance.SpawnPoints.Count == 0)
             {
                 levelRunning = false;
-                Debug.LogError("GameManager could not find any SpawnPoint objects in the scene.", this);
+                Debug.LogError("GameManager could not resolve spawn points from the instantiated level.", this);
                 return;
             }
 
-            spawnManager.Initialize(levelConfig, playerController.transform, spawnPoints);
+            PlayerHealth playerHealth = playerController.GetComponent<PlayerHealth>();
+            if (playerHealth != null)
+            {
+                playerController.enabled = true;
+                playerHealth.ResetState();
+            }
+
+            spawnManager.Initialize(levelConfig, playerController.transform, new List<SpawnPoint>(currentLevelInstance.SpawnPoints));
             elapsedSurvivalTime = 0f;
             levelRunning = true;
 
@@ -141,6 +157,24 @@ namespace BrainEaters.GameFlow
             {
                 cameraFollow = FindFirstObjectByType<CameraFollow>();
             }
+
+            if (levelRootParent == null)
+            {
+                levelRootParent = transform;
+            }
+        }
+
+        private void InstantiateSelectedLevel()
+        {
+            if (currentLevelInstance != null)
+            {
+                Destroy(currentLevelInstance.gameObject);
+                currentLevelInstance = null;
+            }
+
+            currentLevelInstance = Instantiate(levelConfig.LevelPrefab, Vector3.zero, Quaternion.identity, levelRootParent);
+            currentLevelInstance.name = $"{levelConfig.LevelPrefab.name}_Instance";
+            currentLevelInstance.RefreshSpawnPointsIfNeeded();
         }
     }
 }

@@ -5,10 +5,13 @@ using BrainEaters.GameFlow;
 using BrainEaters.Input;
 using BrainEaters.Player;
 using BrainEaters.Spawning;
+using BrainEaters.UI;
+using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 namespace BrainEaters.EditorTools
 {
@@ -87,6 +90,9 @@ namespace BrainEaters.EditorTools
             serializedObject.FindProperty("maxHealth").floatValue = 1f;
             serializedObject.FindProperty("moveSpeed").floatValue = 3.5f;
             serializedObject.FindProperty("stopDistance").floatValue = 1.25f;
+            serializedObject.FindProperty("attackRange").floatValue = 1.6f;
+            serializedObject.FindProperty("attackDamage").floatValue = 1f;
+            serializedObject.FindProperty("attackCooldownSeconds").floatValue = 1.1f;
             serializedObject.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(asset);
             return asset;
@@ -216,6 +222,9 @@ namespace BrainEaters.EditorTools
             GetOrAddComponent<PlayerMovement>(player);
             PlayerEnergyCharge energyCharge = GetOrAddComponent<PlayerEnergyCharge>(player);
             PlayerBombAttack bombAttack = GetOrAddComponent<PlayerBombAttack>(player);
+            PlayerHealth playerHealth = GetOrAddComponent<PlayerHealth>(player);
+            GetOrAddComponent<PlayerHitFeedback>(player);
+            GetOrAddComponent<BombPulseVisual>(player);
             PlayerController controller = GetOrAddComponent<PlayerController>(player);
 
             inputRouter.SetInputSource(inputSource);
@@ -231,6 +240,10 @@ namespace BrainEaters.EditorTools
             bombSerializedObject.FindProperty("damage").floatValue = 999f;
             bombSerializedObject.FindProperty("cooldownSeconds").floatValue = 0.75f;
             bombSerializedObject.ApplyModifiedPropertiesWithoutUndo();
+
+            SerializedObject healthSerializedObject = new SerializedObject(playerHealth);
+            healthSerializedObject.FindProperty("maxHealth").floatValue = 5f;
+            healthSerializedObject.ApplyModifiedPropertiesWithoutUndo();
 
             EditorUtility.SetDirty(controller);
         }
@@ -342,7 +355,51 @@ namespace BrainEaters.EditorTools
             EnsureEnemyVisual(enemy.transform);
             GetOrAddComponent<EnemyMovement>(enemy);
             GetOrAddComponent<EnemyHealth>(enemy);
+            GetOrAddComponent<EnemyAttack>(enemy);
             GetOrAddComponent<EnemyController>(enemy);
+        }
+
+        private static void CreateOrUpdateHud(PlayerHealth playerHealth, PlayerEnergyCharge playerEnergyCharge)
+        {
+            if (TMP_Settings.defaultFontAsset == null)
+            {
+                Debug.LogError("TextMeshPro default font asset is missing. Import TMP Essential Resources first: Window > TextMeshPro > Import TMP Essential Resources.");
+                return;
+            }
+
+            Canvas canvas = Object.FindFirstObjectByType<Canvas>();
+            if (canvas == null)
+            {
+                GameObject canvasObject = new GameObject("GameplayHUD", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+                Undo.RegisterCreatedObjectUndo(canvasObject, "Create GameplayHUD");
+                canvas = canvasObject.GetComponent<Canvas>();
+                canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+                CanvasScaler scaler = canvasObject.GetComponent<CanvasScaler>();
+                scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+                scaler.referenceResolution = new Vector2(1920f, 1080f);
+            }
+
+            GameplayHudController gameplayHud = GetOrAddComponent<GameplayHudController>(canvas.gameObject);
+            GameObject root = GetOrCreateUIChild(canvas.transform, "HUDRoot");
+            RectTransform rootRect = root.GetComponent<RectTransform>();
+            rootRect.anchorMin = new Vector2(0f, 1f);
+            rootRect.anchorMax = new Vector2(0f, 1f);
+            rootRect.pivot = new Vector2(0f, 1f);
+            rootRect.anchoredPosition = new Vector2(24f, -24f);
+            rootRect.sizeDelta = new Vector2(420f, 180f);
+
+            TMP_Text healthLabel = CreateOrUpdateTmpText(root.transform, "HealthLabel", new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, -10f), new Vector2(360f, 24f), "HEALTH");
+            HeartHealthView heartHealthView = CreateOrUpdateHeartHealthView(root.transform, "HealthHearts", new Vector2(0f, -42f));
+            ProgressBarView bombProgressBar = CreateOrUpdateProgressBar(root.transform, "BombProgress", new Vector2(0f, -102f), new Vector2(320f, 58f), new Color(0.2f, 0.8f, 1f, 1f));
+
+            SerializedObject serializedObject = new SerializedObject(gameplayHud);
+            serializedObject.FindProperty("playerHealth").objectReferenceValue = playerHealth;
+            serializedObject.FindProperty("playerEnergyCharge").objectReferenceValue = playerEnergyCharge;
+            serializedObject.FindProperty("heartHealthView").objectReferenceValue = heartHealthView;
+            serializedObject.FindProperty("bombProgressBar").objectReferenceValue = bombProgressBar;
+            serializedObject.FindProperty("healthLabel").objectReferenceValue = healthLabel;
+            serializedObject.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(gameplayHud);
         }
 
         private static void EnsurePlayerVisual(Transform playerRoot)
@@ -371,6 +428,174 @@ namespace BrainEaters.EditorTools
             child.transform.localRotation = Quaternion.identity;
             child.transform.localScale = Vector3.one;
             return child;
+        }
+
+        private static TMP_Text CreateOrUpdateTmpText(Transform parent, string objectName, Vector2 anchorMin, Vector2 anchorMax, Vector2 anchoredPosition, Vector2 size, string defaultText)
+        {
+            GameObject textObject = GetOrCreateUIChild(parent, objectName);
+            RectTransform rectTransform = textObject.GetComponent<RectTransform>();
+            rectTransform.anchorMin = anchorMin;
+            rectTransform.anchorMax = anchorMax;
+            rectTransform.pivot = new Vector2(0f, 1f);
+            rectTransform.anchoredPosition = anchoredPosition;
+            rectTransform.sizeDelta = size;
+
+            Text legacyText = textObject.GetComponent<Text>();
+            if (legacyText != null)
+            {
+                Object.DestroyImmediate(legacyText);
+            }
+
+            TextMeshProUGUI text = GetOrAddTmpText(textObject);
+            if (text == null)
+            {
+                Debug.LogError($"Could not create TMP text for '{objectName}'. Make sure TMP Essential Resources are imported.");
+                return null;
+            }
+
+            text.fontSize = 20;
+            text.alignment = TextAlignmentOptions.TopLeft;
+            text.color = Color.white;
+            text.text = defaultText;
+            return text;
+        }
+
+        private static ProgressBarView CreateOrUpdateProgressBar(Transform parent, string objectName, Vector2 anchoredPosition, Vector2 size, Color fillColor)
+        {
+            GameObject barRoot = GetOrCreateUIChild(parent, objectName);
+            RectTransform rootRect = barRoot.GetComponent<RectTransform>();
+            rootRect.anchorMin = new Vector2(0f, 1f);
+            rootRect.anchorMax = new Vector2(0f, 1f);
+            rootRect.pivot = new Vector2(0f, 1f);
+            rootRect.anchoredPosition = anchoredPosition;
+            rootRect.sizeDelta = size;
+
+            Image background = GetOrAddComponent<Image>(barRoot);
+            background.color = new Color(0f, 0f, 0f, 0.55f);
+
+            TMP_Text valueText = CreateOrUpdateTmpText(barRoot.transform, "ValueText", new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, -2f), new Vector2(size.x, 24f), "BOMB");
+            TMP_Text statusText = CreateOrUpdateTmpText(barRoot.transform, "StatusText", new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, -28f), new Vector2(size.x, 20f), "CHARGING");
+            statusText.fontSize = 16;
+
+            GameObject fillObject = GetOrCreateUIChild(barRoot.transform, "Fill");
+            RectTransform fillRect = fillObject.GetComponent<RectTransform>();
+            fillRect.anchorMin = new Vector2(0f, 0f);
+            fillRect.anchorMax = new Vector2(1f, 0f);
+            fillRect.pivot = new Vector2(0.5f, 0f);
+            fillRect.anchoredPosition = new Vector2(0f, 3f);
+            fillRect.sizeDelta = new Vector2(-6f, 18f);
+
+            Image fill = GetOrAddComponent<Image>(fillObject);
+            fill.type = Image.Type.Filled;
+            fill.fillMethod = Image.FillMethod.Horizontal;
+            fill.fillOrigin = (int)Image.OriginHorizontal.Left;
+            fill.fillAmount = 1f;
+            fill.color = fillColor;
+
+            ProgressBarView progressBarView = GetOrAddComponent<ProgressBarView>(barRoot);
+            SerializedObject serializedObject = new SerializedObject(progressBarView);
+            serializedObject.FindProperty("fillImage").objectReferenceValue = fill;
+            serializedObject.FindProperty("valueText").objectReferenceValue = valueText;
+            serializedObject.FindProperty("statusText").objectReferenceValue = statusText;
+            serializedObject.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(progressBarView);
+            return progressBarView;
+        }
+
+        private static HeartHealthView CreateOrUpdateHeartHealthView(Transform parent, string objectName, Vector2 anchoredPosition)
+        {
+            GameObject root = GetOrCreateUIChild(parent, objectName);
+            RectTransform rootRect = root.GetComponent<RectTransform>();
+            rootRect.anchorMin = new Vector2(0f, 1f);
+            rootRect.anchorMax = new Vector2(0f, 1f);
+            rootRect.pivot = new Vector2(0f, 1f);
+            rootRect.anchoredPosition = anchoredPosition;
+            rootRect.sizeDelta = new Vector2(240f, 36f);
+
+            HorizontalLayoutGroup layoutGroup = GetOrAddComponent<HorizontalLayoutGroup>(root);
+            layoutGroup.spacing = 6f;
+            layoutGroup.childAlignment = TextAnchor.MiddleLeft;
+            layoutGroup.childControlHeight = false;
+            layoutGroup.childControlWidth = false;
+            layoutGroup.childForceExpandHeight = false;
+            layoutGroup.childForceExpandWidth = false;
+
+            GameObject templateObject = GetOrCreateUIChild(root.transform, "HeartTemplate");
+            RectTransform templateRect = templateObject.GetComponent<RectTransform>();
+            templateRect.sizeDelta = new Vector2(28f, 28f);
+
+            Image templateImage = GetOrAddComponent<Image>(templateObject);
+            templateImage.sprite = null;
+            templateImage.color = new Color(1f, 0.25f, 0.35f, 1f);
+            templateImage.gameObject.SetActive(false);
+
+            TextMeshProUGUI templateText = GetOrAddTmpText(templateObject);
+            if (templateText == null)
+            {
+                Debug.LogError("Could not create TMP heart template. Make sure TMP Essential Resources are imported.");
+                return null;
+            }
+
+            templateText.text = "♥";
+            templateText.fontSize = 26f;
+            templateText.alignment = TextAlignmentOptions.Center;
+            templateText.color = Color.white;
+
+            HeartHealthView heartHealthView = GetOrAddComponent<HeartHealthView>(root);
+            SerializedObject serializedObject = new SerializedObject(heartHealthView);
+            serializedObject.FindProperty("heartContainer").objectReferenceValue = rootRect;
+            serializedObject.FindProperty("heartTemplate").objectReferenceValue = templateImage;
+            serializedObject.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(heartHealthView);
+            return heartHealthView;
+        }
+
+        private static GameObject GetOrCreateUIChild(Transform parent, string childName)
+        {
+            Transform existingChild = parent.Find(childName);
+            if (existingChild != null)
+            {
+                if (existingChild is RectTransform)
+                {
+                    return existingChild.gameObject;
+                }
+
+                Object.DestroyImmediate(existingChild.gameObject);
+            }
+
+            GameObject child = new GameObject(childName, typeof(RectTransform), typeof(CanvasRenderer));
+            child.transform.SetParent(parent);
+            child.transform.localPosition = Vector3.zero;
+            child.transform.localRotation = Quaternion.identity;
+            child.transform.localScale = Vector3.one;
+            return child;
+        }
+
+        private static TextMeshProUGUI GetOrAddTmpText(GameObject gameObject)
+        {
+            TextMeshProUGUI text = gameObject.GetComponent<TextMeshProUGUI>();
+            if (text != null)
+            {
+                return text;
+            }
+
+            if (gameObject.GetComponent<CanvasRenderer>() == null)
+            {
+                Undo.AddComponent<CanvasRenderer>(gameObject);
+            }
+
+            TextMeshProUGUI createdText = Undo.AddComponent<TextMeshProUGUI>(gameObject);
+            if (createdText == null)
+            {
+                return null;
+            }
+
+            if (TMP_Settings.defaultFontAsset != null)
+            {
+                createdText.font = TMP_Settings.defaultFontAsset;
+            }
+
+            return createdText;
         }
 
         private static void EnsurePrimitiveVisual(GameObject visualRoot, PrimitiveType primitiveType, Vector3 localPosition, Vector3 localScale)

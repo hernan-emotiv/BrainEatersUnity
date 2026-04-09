@@ -1,4 +1,5 @@
 using BrainEaters.Spawning;
+using BrainEaters.GameFlow;
 using UnityEditor;
 using UnityEngine;
 
@@ -19,6 +20,7 @@ namespace BrainEaters.EditorTools
 
             GameObject arenaRoot = new GameObject(ArenaRootName);
             Undo.RegisterCreatedObjectUndo(arenaRoot, "Create Brain Eaters Arena");
+            arenaRoot.AddComponent<LevelContext>();
 
             CreateFloor(arenaRoot.transform);
             CreateWalls(arenaRoot.transform);
@@ -71,10 +73,7 @@ namespace BrainEaters.EditorTools
 
         private static void CreateSpawnPoint(Transform parent, string pointName, Vector3 localPosition)
         {
-            GameObject point = new GameObject(pointName);
-            point.transform.SetParent(parent);
-            point.transform.localPosition = localPosition;
-            point.AddComponent<SpawnPoint>();
+            GameObject point = SpawnPointBuilder.CreateSpawnPointObject(parent, pointName, localPosition);
             RegisterCreatedObject(point);
         }
 
