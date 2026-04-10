@@ -1,9 +1,10 @@
 using System;
+using BrainEaters.Core;
 using UnityEngine;
 
 namespace BrainEaters.Player
 {
-    public class PlayerHealth : MonoBehaviour
+    public class PlayerHealth : MonoBehaviour, IDamageable
     {
         [SerializeField] private float maxHealth = 100f;
         [SerializeField] private bool disableControlsOnDeath = true;
@@ -51,6 +52,11 @@ namespace BrainEaters.Player
             {
                 HandleDeath();
             }
+        }
+
+        public void ApplyDamage(float amount)
+        {
+            TakeDamage(amount);
         }
 
         private void HandleDeath()

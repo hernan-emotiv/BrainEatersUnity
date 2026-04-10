@@ -7,8 +7,8 @@ namespace BrainEaters.Enemies
 {
     public class EnemyHealth : MonoBehaviour, IDamageable
     {
-        [SerializeField] private float maxHealth = 1f;
-        [SerializeField] private float destroyDelaySeconds = 0.05f;
+        [SerializeField, HideInInspector] private float maxHealth = 1f;
+        [SerializeField, HideInInspector] private float destroyDelaySeconds = 1.25f;
 
         public event Action<EnemyHealth> Died;
 
@@ -30,6 +30,7 @@ namespace BrainEaters.Enemies
 
             EnemyConfig = enemyConfig;
             maxHealth = enemyConfig.MaxHealth;
+            destroyDelaySeconds = enemyConfig.DestroyDelaySeconds;
             ResetState();
         }
 
@@ -76,6 +77,18 @@ namespace BrainEaters.Enemies
             if (movement != null)
             {
                 movement.enabled = false;
+            }
+
+            EnemyAttack attack = GetComponent<EnemyAttack>();
+            if (attack != null)
+            {
+                attack.enabled = false;
+            }
+
+            EnemyAnimatorDriver animatorDriver = GetComponent<EnemyAnimatorDriver>();
+            if (animatorDriver != null)
+            {
+                animatorDriver.PlayDeath();
             }
 
             EnemyController controller = GetComponent<EnemyController>();

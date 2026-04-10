@@ -58,6 +58,11 @@ namespace BrainEaters.Player
             int hitCount = 0;
             foreach (Collider hit in hits)
             {
+                if (hit == null || hit.transform.root == transform.root)
+                {
+                    continue;
+                }
+
                 IDamageable damageable = hit.GetComponentInParent<IDamageable>();
                 if (damageable == null || !processedTargets.Add(damageable))
                 {

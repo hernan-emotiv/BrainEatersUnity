@@ -12,6 +12,7 @@ namespace BrainEaters.Enemies
         [SerializeField] private EnemyMovement enemyMovement;
         [SerializeField] private EnemyHealth enemyHealth;
         [SerializeField] private EnemyAttack enemyAttack;
+        [SerializeField] private EnemyAnimatorDriver enemyAnimatorDriver;
         [SerializeField] private Transform target;
         [SerializeField] private EnemyConfig enemyConfig;
 
@@ -47,6 +48,11 @@ namespace BrainEaters.Enemies
                 enemyHealth.Configure(enemyConfig);
             }
 
+            if (enemyAnimatorDriver != null)
+            {
+                enemyAnimatorDriver.ResetState();
+            }
+
             targetHealth = targetTransform != null ? targetTransform.GetComponent<PlayerHealth>() : null;
         }
 
@@ -62,13 +68,37 @@ namespace BrainEaters.Enemies
                 targetHealth = target.GetComponent<PlayerHealth>();
             }
 
-            if (enemyAttack != null && enemyAttack.IsTargetInRange(target.position))
+            if (enemyAttack != null && enemyAttack.IsAttacking)
             {
-                enemyAttack.TryAttack(targetHealth);
+                enemyMovement.FaceTowards(target.position, Time.deltaTime);
                 return;
             }
 
-            enemyMovement.Tick(target.position, Time.deltaTime);
+            if (enemyAttack != null && enemyAttack.IsTargetInRange(target.position))
+            {
+                enemyMovement.FaceTowards(target.position, Time.deltaTime);
+
+                if (enemyAttack.TryAttack())
+                {
+                    enemyAnimatorDriver?.PlayAttack();
+                }
+                else
+                {
+                    enemyAnimatorDriver?.PlayIdle();
+                }
+
+                return;
+            }
+
+            bool moved = enemyMovement.Tick(target.position, Time.deltaTime);
+            if (moved)
+            {
+                enemyAnimatorDriver?.PlayWalk();
+            }
+            else
+            {
+                enemyAnimatorDriver?.PlayIdle();
+            }
         }
 
         private void ResolveReferences()
@@ -86,6 +116,11 @@ namespace BrainEaters.Enemies
             if (enemyAttack == null)
             {
                 enemyAttack = GetComponent<EnemyAttack>();
+            }
+
+            if (enemyAnimatorDriver == null)
+            {
+                enemyAnimatorDriver = GetComponent<EnemyAnimatorDriver>();
             }
         }
     }
