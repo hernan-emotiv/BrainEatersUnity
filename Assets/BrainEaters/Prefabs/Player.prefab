@@ -232,6 +232,10 @@ GameObject:
   - component: {fileID: 3409872107600476001}
   - component: {fileID: 791477109705402311}
   - component: {fileID: 6835454350210777025}
+  - component: {fileID: 2517952737553592395}
+  - component: {fileID: 129997747714689191}
+  - component: {fileID: 7527771446561896851}
+  - component: {fileID: 4739673312583707883}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -292,6 +296,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 46c1fed9166a84ce5b4e5728d88ca114, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  enableMouseLook: 0
+  mouseLookSensitivity: 0.015
 --- !u!114 &5187834875856360923
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -373,6 +379,73 @@ MonoBehaviour:
   playerMovement: {fileID: 5952068560967622499}
   playerEnergyCharge: {fileID: 3409872107600476001}
   playerBombAttack: {fileID: 791477109705402311}
+--- !u!114 &2517952737553592395
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4593628418395658805}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3affa64e5b53b47e6bb2d6ed02814eb4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxHealth: 5
+  disableControlsOnDeath: 1
+  playerController: {fileID: 6835454350210777025}
+--- !u!114 &129997747714689191
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4593628418395658805}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a2d01894ab9994f5fb67090514b3b0b3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playerHealth: {fileID: 2517952737553592395}
+  visualRoot: {fileID: 3648203134651493582}
+  flashColor: {r: 1, g: 0.35, b: 0.35, a: 1}
+  flashDurationSeconds: 0.18
+  scaleMultiplier: 1.1
+--- !u!114 &7527771446561896851
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4593628418395658805}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 89c1e8c4a450b499eaac572ed9595b4c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  effectOrigin: {fileID: 0}
+  durationSeconds: 0.25
+  verticalOffset: 0.1
+  pulseColor: {r: 0.25, g: 0.9, b: 1, a: 0.49019608}
+--- !u!114 &4739673312583707883
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4593628418395658805}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 76d2e386fbcd64c1abb21d5b05da4bce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  moveJoystick: {fileID: 0}
+  lookJoystick: {fileID: 0}
+  invisibleMoveJoystick: {fileID: 0}
+  invisibleLookJoystick: {fileID: 0}
+  chargeButton: {fileID: 0}
+  bombButton: {fileID: 0}
+  controlMode: 0
 --- !u!1 &6033100770219183424
 GameObject:
   m_ObjectHideFlags: 0

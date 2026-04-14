@@ -10,10 +10,8 @@ namespace BrainEaters.UI
         [SerializeField] private RectTransform fillArea;
         [SerializeField] private TMP_Text valueText;
         [SerializeField] private TMP_Text statusText;
-        [SerializeField] private bool preserveRightEdge = true;
 
         private RectTransform fillRectTransform;
-        private float fullWidth = -1f;
 
         private void Awake()
         {
@@ -38,22 +36,19 @@ namespace BrainEaters.UI
             }
 
             float clampedValue = Mathf.Clamp01(normalizedValue);
-            if (fullWidth < 0f)
+            if (fillArea == null)
             {
-                fullWidth = fillRectTransform.rect.width;
+                return;
             }
 
-            float targetWidth = fullWidth * clampedValue;
-            Vector2 sizeDelta = fillRectTransform.sizeDelta;
-            sizeDelta.x = targetWidth;
-            fillRectTransform.sizeDelta = sizeDelta;
+            float availableWidth = fillArea.rect.width;
+            float rightInset = availableWidth * (1f - clampedValue);
 
-            if (preserveRightEdge)
-            {
-                Vector2 anchoredPosition = fillRectTransform.anchoredPosition;
-                anchoredPosition.x = 0f;
-                fillRectTransform.anchoredPosition = anchoredPosition;
-            }
+            fillRectTransform.anchorMin = new Vector2(0f, 0f);
+            fillRectTransform.anchorMax = new Vector2(1f, 1f);
+            fillRectTransform.pivot = new Vector2(0f, 0.5f);
+            fillRectTransform.offsetMin = new Vector2(0f, 0f);
+            fillRectTransform.offsetMax = new Vector2(-rightInset, 0f);
         }
 
         public void SetValueText(string text)
@@ -84,15 +79,6 @@ namespace BrainEaters.UI
             if (fillArea == null)
             {
                 fillArea = fillRectTransform.parent as RectTransform;
-            }
-
-            if (fillArea != null)
-            {
-                fullWidth = fillArea.rect.width;
-            }
-            else if (fillRectTransform != null && fullWidth < 0f)
-            {
-                fullWidth = fillRectTransform.rect.width;
             }
         }
     }

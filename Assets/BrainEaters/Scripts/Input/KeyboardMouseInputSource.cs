@@ -5,7 +5,12 @@ namespace BrainEaters.Input
 {
     public class KeyboardMouseInputSource : MonoBehaviour, IGameplayInputSource
     {
+        [SerializeField] private bool enableMouseLook;
+        [SerializeField] private float mouseLookSensitivity = 0.015f;
+
         public Vector2 Move { get; private set; }
+        public Vector2 Look { get; private set; }
+        public bool UsesFacingRelativeMovement => false;
         public bool IsChargeHeld { get; private set; }
         public bool WasBombPressedThisFrame { get; private set; }
 
@@ -15,6 +20,7 @@ namespace BrainEaters.Input
             Mouse mouse = Mouse.current;
 
             Move = ReadMove(keyboard);
+            Look = ReadLook(mouse);
             IsChargeHeld =
                 (mouse != null && mouse.leftButton.isPressed) ||
                 (keyboard != null && keyboard.spaceKey.isPressed);
@@ -22,6 +28,16 @@ namespace BrainEaters.Input
             WasBombPressedThisFrame =
                 (mouse != null && mouse.rightButton.wasPressedThisFrame) ||
                 (keyboard != null && keyboard.qKey.wasPressedThisFrame);
+        }
+
+        private Vector2 ReadLook(Mouse mouse)
+        {
+            if (!enableMouseLook || mouse == null || !mouse.rightButton.isPressed)
+            {
+                return Vector2.zero;
+            }
+
+            return mouse.delta.ReadValue() * mouseLookSensitivity;
         }
 
         private static Vector2 ReadMove(Keyboard keyboard)

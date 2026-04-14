@@ -36,7 +36,7 @@ namespace BrainEaters.Player
                 return;
             }
 
-            playerMovement.Tick(inputRouter.Move, Time.deltaTime);
+            playerMovement.Tick(inputRouter.Move, Time.deltaTime, inputRouter.UsesFacingRelativeMovement);
             playerEnergyCharge.Tick(inputRouter.IsChargeHeld, Time.deltaTime);
 
             if (inputRouter.WasBombPressedThisFrame)

@@ -28,7 +28,7 @@ namespace BrainEaters.Player
             cameraTransform = targetCamera;
         }
 
-        public void Tick(Vector2 moveInput, float deltaTime)
+        public void Tick(Vector2 moveInput, float deltaTime, bool useFacingRelativeMovement = false)
         {
             if (deltaTime <= 0f)
             {
@@ -40,9 +40,11 @@ namespace BrainEaters.Player
                 cameraTransform = Camera.main.transform;
             }
 
-            Vector3 planarMove = GetPlanarMove(moveInput);
+            Vector3 planarMove = useFacingRelativeMovement
+                ? GetFacingRelativeMove(moveInput)
+                : GetPlanarMove(moveInput);
 
-            if (planarMove.sqrMagnitude > 0.001f)
+            if (!useFacingRelativeMovement && planarMove.sqrMagnitude > 0.001f)
             {
                 Quaternion desiredRotation = Quaternion.LookRotation(planarMove, Vector3.up);
                 transform.rotation = Quaternion.RotateTowards(transform.rotation, desiredRotation, turnSpeed * deltaTime);
@@ -59,6 +61,20 @@ namespace BrainEaters.Player
             velocity.y = verticalVelocity;
 
             characterController.Move(velocity * deltaTime);
+        }
+
+        private Vector3 GetFacingRelativeMove(Vector2 moveInput)
+        {
+            float forwardAmount = Mathf.Clamp(moveInput.y, -1f, 1f);
+            if (Mathf.Abs(forwardAmount) <= 0.001f)
+            {
+                return Vector3.zero;
+            }
+
+            Vector3 forward = transform.forward;
+            forward.y = 0f;
+            forward.Normalize();
+            return forward * forwardAmount;
         }
 
         private Vector3 GetPlanarMove(Vector2 moveInput)
