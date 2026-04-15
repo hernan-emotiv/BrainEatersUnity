@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9c89d8107a8d041f1932b1d54497c24a, type: 3}
-  m_Name: LevelConfig_Level01
+  m_Name: LevelConfig_Level03
   m_EditorClassIdentifier: 
-  levelId: level_01
-  displayName: Survive
+  levelId: level_03
+  displayName: Collect
   gameModeType: 0
   survivalDurationSeconds: 60
   levelPrefab: {fileID: 7935985860799826945, guid: e657b464ca4e7453299d3ca497c31393, type: 3}

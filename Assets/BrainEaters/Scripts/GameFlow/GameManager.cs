@@ -4,6 +4,7 @@ using BrainEaters.Configs;
 using BrainEaters.Player;
 using BrainEaters.Spawning;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace BrainEaters.GameFlow
 {
@@ -42,6 +43,15 @@ namespace BrainEaters.GameFlow
 
         private void Start()
         {
+            if (LevelSession.SelectedLevel != null)
+            {
+                levelConfig = LevelSession.SelectedLevel;
+            }
+            else if (LevelSession.ActiveCampaign == null && levelConfig != null)
+            {
+                LevelSession.SetCampaign(null);
+            }
+
             StartLevel(levelConfig);
         }
 
@@ -218,6 +228,11 @@ namespace BrainEaters.GameFlow
 
             SetState(resultState);
 
+            if (resultState == GameplayState.Won)
+            {
+                LevelProgressionService.RegisterVictory(LevelSession.ActiveCampaign, levelConfig);
+            }
+
             GameplayReport report = new GameplayReport(
                 resultState,
                 enemiesEliminated,
@@ -237,7 +252,12 @@ namespace BrainEaters.GameFlow
 
         public void BackToMenu()
         {
-            Debug.Log("Back to menu requested. Not implemented yet.", this);
+            string sceneName = LevelSession.ActiveCampaign != null
+                ? LevelSession.ActiveCampaign.LevelSelectSceneName
+                : "LevelSelectScene";
+
+            LevelSession.ClearSelectedLevel();
+            SceneManager.LoadScene(sceneName);
         }
 
         private void SetState(GameplayState newState)
