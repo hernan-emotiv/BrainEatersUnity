@@ -11,6 +11,7 @@ namespace BrainEaters.Configs
         [SerializeField] private string displayName = "Level 1";
         [SerializeField] private GameModeType gameModeType = GameModeType.Survival;
         [SerializeField] private float survivalDurationSeconds = 60f;
+        [SerializeField] private float captureDurationSeconds = 3f;
         [SerializeField] private LevelContext levelPrefab;
         [SerializeField] private SpawnConfig spawnConfig;
         [SerializeField] private List<LevelEnemyDefinition> enemyTypes = new List<LevelEnemyDefinition>();
@@ -19,6 +20,7 @@ namespace BrainEaters.Configs
         public string DisplayName => string.IsNullOrWhiteSpace(displayName) ? name : displayName;
         public GameModeType GameModeType => gameModeType;
         public float SurvivalDurationSeconds => survivalDurationSeconds;
+        public float CaptureDurationSeconds => captureDurationSeconds;
         public LevelContext LevelPrefab => levelPrefab;
         public SpawnConfig SpawnConfig => spawnConfig;
         public IReadOnlyList<LevelEnemyDefinition> EnemyTypes => enemyTypes;

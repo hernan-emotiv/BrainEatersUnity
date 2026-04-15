@@ -7,8 +7,10 @@ namespace BrainEaters.GameFlow
     public class LevelContext : MonoBehaviour
     {
         [SerializeField] private List<SpawnPoint> spawnPoints = new List<SpawnPoint>();
+        [SerializeField] private List<CaptureZone> captureZones = new List<CaptureZone>();
 
         public IReadOnlyList<SpawnPoint> SpawnPoints => spawnPoints;
+        public IReadOnlyList<CaptureZone> CaptureZones => captureZones;
 
         private void Awake()
         {
@@ -22,13 +24,15 @@ namespace BrainEaters.GameFlow
 
         public void RefreshSpawnPointsIfNeeded()
         {
-            if (spawnPoints.Count > 0)
+            if (spawnPoints.Count > 0 && captureZones.Count > 0)
             {
                 return;
             }
 
             spawnPoints.Clear();
             spawnPoints.AddRange(GetComponentsInChildren<SpawnPoint>(true));
+            captureZones.Clear();
+            captureZones.AddRange(GetComponentsInChildren<CaptureZone>(true));
         }
     }
 }

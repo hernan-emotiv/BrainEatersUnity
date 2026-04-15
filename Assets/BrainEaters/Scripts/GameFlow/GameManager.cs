@@ -24,6 +24,7 @@ namespace BrainEaters.GameFlow
         private float elapsedSurvivalTime;
         private float damageReceived;
         private int enemiesEliminated;
+        private int capturedZonesCount;
         private readonly Dictionary<EnemyType, int> enemyKillCounts = new Dictionary<EnemyType, int>();
         private readonly Dictionary<EnemyType, string> enemyKillLabels = new Dictionary<EnemyType, string>();
         private bool levelRunning;
@@ -69,20 +70,24 @@ namespace BrainEaters.GameFlow
 
             elapsedSurvivalTime += Time.deltaTime;
 
-            if (levelConfig.GameModeType != GameModeType.Survival)
-            {
-                return;
-            }
-
             if (cachedPlayerHealth != null && !cachedPlayerHealth.IsAlive)
             {
                 EndGameplay(GameplayState.Lost);
                 return;
             }
 
-            if (elapsedSurvivalTime >= levelConfig.SurvivalDurationSeconds)
+            if (levelConfig.GameModeType == GameModeType.Survival)
             {
-                EndGameplay(cachedPlayerHealth != null && cachedPlayerHealth.IsAlive ? GameplayState.Won : GameplayState.Lost);
+                if (elapsedSurvivalTime >= levelConfig.SurvivalDurationSeconds)
+                {
+                    EndGameplay(cachedPlayerHealth != null && cachedPlayerHealth.IsAlive ? GameplayState.Won : GameplayState.Lost);
+                }
+                return;
+            }
+
+            if (levelConfig.GameModeType == GameModeType.Capture)
+            {
+                TickCaptureMode(Time.deltaTime);
             }
         }
 
@@ -163,8 +168,10 @@ namespace BrainEaters.GameFlow
             SubscribeToGameplayEvents();
             damageReceived = 0f;
             enemiesEliminated = 0;
+            capturedZonesCount = 0;
             ResetKillTracking();
             elapsedSurvivalTime = 0f;
+            ConfigureLevelObjectives();
             levelRunning = true;
             SetState(GameplayState.Running);
 
@@ -283,6 +290,20 @@ namespace BrainEaters.GameFlow
             {
                 spawnManager.EnemyEliminated += HandleEnemyEliminated;
             }
+
+            if (currentLevelInstance != null)
+            {
+                for (int i = 0; i < currentLevelInstance.CaptureZones.Count; i++)
+                {
+                    CaptureZone captureZone = currentLevelInstance.CaptureZones[i];
+                    if (captureZone == null)
+                    {
+                        continue;
+                    }
+
+                    captureZone.Captured += HandleCaptureZoneCaptured;
+                }
+            }
         }
 
         private void UnsubscribeFromGameplayEvents()
@@ -296,6 +317,76 @@ namespace BrainEaters.GameFlow
             if (spawnManager != null)
             {
                 spawnManager.EnemyEliminated -= HandleEnemyEliminated;
+            }
+
+            if (currentLevelInstance != null)
+            {
+                for (int i = 0; i < currentLevelInstance.CaptureZones.Count; i++)
+                {
+                    CaptureZone captureZone = currentLevelInstance.CaptureZones[i];
+                    if (captureZone == null)
+                    {
+                        continue;
+                    }
+
+                    captureZone.Captured -= HandleCaptureZoneCaptured;
+                }
+            }
+        }
+
+        private void ConfigureLevelObjectives()
+        {
+            if (currentLevelInstance == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < currentLevelInstance.CaptureZones.Count; i++)
+            {
+                CaptureZone captureZone = currentLevelInstance.CaptureZones[i];
+                if (captureZone == null)
+                {
+                    continue;
+                }
+
+                captureZone.Configure(levelConfig.CaptureDurationSeconds);
+                captureZone.ResetState();
+            }
+        }
+
+        private void TickCaptureMode(float deltaTime)
+        {
+            if (currentLevelInstance == null)
+            {
+                return;
+            }
+
+            int totalZones = currentLevelInstance.CaptureZones.Count;
+            if (totalZones == 0)
+            {
+                return;
+            }
+
+            int capturedCount = 0;
+            for (int i = 0; i < totalZones; i++)
+            {
+                CaptureZone captureZone = currentLevelInstance.CaptureZones[i];
+                if (captureZone == null)
+                {
+                    continue;
+                }
+
+                captureZone.Tick(deltaTime);
+                if (captureZone.IsCaptured)
+                {
+                    capturedCount++;
+                }
+            }
+
+            capturedZonesCount = capturedCount;
+            if (capturedZonesCount >= totalZones)
+            {
+                EndGameplay(GameplayState.Won);
             }
         }
 
@@ -365,6 +456,26 @@ namespace BrainEaters.GameFlow
             }
 
             enemyKillCounts[enemyType]++;
+        }
+
+        private void HandleCaptureZoneCaptured(CaptureZone _)
+        {
+            if (currentLevelInstance == null)
+            {
+                return;
+            }
+
+            int capturedCount = 0;
+            for (int i = 0; i < currentLevelInstance.CaptureZones.Count; i++)
+            {
+                CaptureZone captureZone = currentLevelInstance.CaptureZones[i];
+                if (captureZone != null && captureZone.IsCaptured)
+                {
+                    capturedCount++;
+                }
+            }
+
+            capturedZonesCount = capturedCount;
         }
     }
 }
