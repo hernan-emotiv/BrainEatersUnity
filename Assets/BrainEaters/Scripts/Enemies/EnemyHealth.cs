@@ -2,6 +2,7 @@ using System;
 using BrainEaters.Configs;
 using BrainEaters.Core;
 using UnityEngine;
+using UnityEngine.AI;
 
 namespace BrainEaters.Enemies
 {
@@ -77,6 +78,12 @@ namespace BrainEaters.Enemies
             if (movement != null)
             {
                 movement.enabled = false;
+            }
+
+            NavMeshAgent navMeshAgent = GetComponent<NavMeshAgent>();
+            if (navMeshAgent != null)
+            {
+                navMeshAgent.enabled = false;
             }
 
             EnemyAttack attack = GetComponent<EnemyAttack>();

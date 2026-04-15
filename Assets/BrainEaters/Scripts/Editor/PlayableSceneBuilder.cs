@@ -10,6 +10,7 @@ using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
@@ -351,6 +352,13 @@ namespace BrainEaters.EditorTools
             BoxCollider collider = GetOrAddComponent<BoxCollider>(enemy);
             collider.center = new Vector3(0f, 0.75f, 0f);
             collider.size = new Vector3(1f, 1.5f, 1f);
+
+            NavMeshAgent navMeshAgent = GetOrAddComponent<NavMeshAgent>(enemy);
+            navMeshAgent.radius = 0.45f;
+            navMeshAgent.height = 1.5f;
+            navMeshAgent.baseOffset = 0f;
+            navMeshAgent.obstacleAvoidanceType = ObstacleAvoidanceType.MedQualityObstacleAvoidance;
+            navMeshAgent.autoBraking = true;
 
             EnsureEnemyVisual(enemy.transform);
             GetOrAddComponent<EnemyMovement>(enemy);
