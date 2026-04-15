@@ -3,6 +3,7 @@ using UnityEngine;
 
 namespace BrainEaters.Cameras
 {
+    [ExecuteAlways]
     public class CameraFollow : MonoBehaviour
     {
         [SerializeField] private Transform target;
@@ -64,15 +65,28 @@ namespace BrainEaters.Cameras
             }
         }
 
+        private void OnValidate()
+        {
+            orbitInitialized = false;
+
+            if (!Application.isPlaying)
+            {
+                ResolveReferences();
+                InitializeOrbitIfNeeded();
+                ApplyImmediatePreview();
+            }
+        }
+
         private void UpdateOrbitAngles()
         {
             Vector2 lookInput = inputRouter != null ? inputRouter.Look : Vector2.zero;
+            float lookTimeFactor = inputRouter != null && inputRouter.UsesDeltaLookInput ? 1f : Time.deltaTime;
 
             if (controlMode == MobileControlMode.SingleJoystick)
             {
                 if (Mathf.Abs(lookInput.x) > 0.001f)
                 {
-                    float targetYaw = target.eulerAngles.y + (lookInput.x * yawSensitivity * Time.deltaTime);
+                    float targetYaw = target.eulerAngles.y + (lookInput.x * yawSensitivity * lookTimeFactor);
                     target.rotation = Quaternion.Euler(0f, targetYaw, 0f);
                 }
 
@@ -80,8 +94,8 @@ namespace BrainEaters.Cameras
                 return;
             }
 
-            yaw += lookInput.x * yawSensitivity * Time.deltaTime;
-            pitch = Mathf.Clamp(pitch - (lookInput.y * pitchSensitivity * Time.deltaTime), pitchLimits.x, pitchLimits.y);
+            yaw += lookInput.x * yawSensitivity * lookTimeFactor;
+            pitch = Mathf.Clamp(pitch - (lookInput.y * pitchSensitivity * lookTimeFactor), pitchLimits.x, pitchLimits.y);
         }
 
         private void InitializeOrbitIfNeeded()
@@ -108,6 +122,27 @@ namespace BrainEaters.Cameras
             if (inputRouter == null && target != null)
             {
                 inputRouter = target.GetComponent<PlayerInputRouter>();
+            }
+        }
+
+        private void ApplyImmediatePreview()
+        {
+            if (target == null)
+            {
+                return;
+            }
+
+            Vector3 focusPoint = target.position + Vector3.up * targetLookHeight;
+            Quaternion orbitRotation = Quaternion.Euler(pitch, yaw, 0f);
+            transform.position = focusPoint + orbitRotation * (Vector3.back * orbitDistance);
+
+            if (lookAtTarget)
+            {
+                transform.LookAt(focusPoint);
+            }
+            else
+            {
+                transform.rotation = orbitRotation;
             }
         }
     }

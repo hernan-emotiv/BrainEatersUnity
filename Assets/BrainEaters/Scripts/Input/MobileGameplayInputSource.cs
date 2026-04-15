@@ -15,6 +15,7 @@ namespace BrainEaters.Input
         public Vector2 Move { get; private set; }
         public Vector2 Look { get; private set; }
         public bool UsesFacingRelativeMovement => controlMode == MobileControlMode.SingleJoystick;
+        public bool UsesDeltaLookInput => false;
         public bool IsChargeHeld { get; private set; }
         public bool WasBombPressedThisFrame { get; private set; }
         public MobileControlMode ControlMode => controlMode;

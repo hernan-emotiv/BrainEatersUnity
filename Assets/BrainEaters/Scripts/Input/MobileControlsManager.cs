@@ -125,10 +125,18 @@ namespace BrainEaters.Input
             if (useMobileControls && mobileGameplayInputSource != null)
             {
                 playerInputRouter.SetInputSource(mobileGameplayInputSource);
+                if (cameraFollow != null)
+                {
+                    cameraFollow.SetControlMode(currentControlMode);
+                }
             }
             else if (keyboardMouseInputSource != null)
             {
                 playerInputRouter.SetInputSource(keyboardMouseInputSource);
+                if (cameraFollow != null)
+                {
+                    cameraFollow.SetControlMode(MobileControlMode.DualJoystick);
+                }
             }
         }
 

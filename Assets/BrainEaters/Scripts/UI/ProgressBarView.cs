@@ -10,8 +10,10 @@ namespace BrainEaters.UI
         [SerializeField] private RectTransform fillArea;
         [SerializeField] private TMP_Text valueText;
         [SerializeField] private TMP_Text statusText;
+        [SerializeField] private UiFillAnimator fillAnimator;
 
         private RectTransform fillRectTransform;
+        private bool hasAppliedInitialValue;
 
         private void Awake()
         {
@@ -41,13 +43,20 @@ namespace BrainEaters.UI
                 return;
             }
 
+            if (fillAnimator != null)
+            {
+                fillAnimator.SetNormalized(clampedValue, !hasAppliedInitialValue);
+                hasAppliedInitialValue = true;
+                return;
+            }
+
             float availableWidth = fillArea.rect.width;
             float rightInset = availableWidth * (1f - clampedValue);
 
             fillRectTransform.anchorMin = new Vector2(0f, 0f);
             fillRectTransform.anchorMax = new Vector2(1f, 1f);
             fillRectTransform.pivot = new Vector2(0f, 0.5f);
-            fillRectTransform.offsetMin = new Vector2(0f, 0f);
+            fillRectTransform.offsetMin = Vector2.zero;
             fillRectTransform.offsetMax = new Vector2(-rightInset, 0f);
         }
 
@@ -79,6 +88,11 @@ namespace BrainEaters.UI
             if (fillArea == null)
             {
                 fillArea = fillRectTransform.parent as RectTransform;
+            }
+
+            if (fillAnimator == null)
+            {
+                fillAnimator = GetComponent<UiFillAnimator>();
             }
         }
     }

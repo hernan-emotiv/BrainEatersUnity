@@ -5,12 +5,14 @@ namespace BrainEaters.Input
 {
     public class KeyboardMouseInputSource : MonoBehaviour, IGameplayInputSource
     {
-        [SerializeField] private bool enableMouseLook;
+        [SerializeField] private bool enableMouseLook = true;
+        [SerializeField] private bool requireMouseButtonForLook;
         [SerializeField] private float mouseLookSensitivity = 0.015f;
 
         public Vector2 Move { get; private set; }
         public Vector2 Look { get; private set; }
         public bool UsesFacingRelativeMovement => false;
+        public bool UsesDeltaLookInput => true;
         public bool IsChargeHeld { get; private set; }
         public bool WasBombPressedThisFrame { get; private set; }
 
@@ -32,7 +34,12 @@ namespace BrainEaters.Input
 
         private Vector2 ReadLook(Mouse mouse)
         {
-            if (!enableMouseLook || mouse == null || !mouse.rightButton.isPressed)
+            if (!enableMouseLook || mouse == null)
+            {
+                return Vector2.zero;
+            }
+
+            if (requireMouseButtonForLook && !mouse.rightButton.isPressed)
             {
                 return Vector2.zero;
             }

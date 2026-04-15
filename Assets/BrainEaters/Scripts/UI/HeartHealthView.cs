@@ -9,9 +9,12 @@ namespace BrainEaters.UI
         [SerializeField] private RectTransform heartContainer;
         [SerializeField] private Image heartTemplate;
         [SerializeField] private bool autoCollectExistingChildren = true;
+        [SerializeField] private bool animateVisibility = true;
 
         private readonly List<Image> spawnedHearts = new List<Image>();
+        private readonly List<UiScaleVisibilityAnimator> heartAnimators = new List<UiScaleVisibilityAnimator>();
         private bool initialized;
+        private bool hasAppliedInitialState;
 
         public void SetHealth(int currentHealth, int maxHealth)
         {
@@ -28,9 +31,20 @@ namespace BrainEaters.UI
             {
                 bool shouldExist = i < safeMaxHealth;
                 bool shouldBeVisible = i < currentHealth;
+                bool finalVisible = shouldExist && shouldBeVisible;
 
-                spawnedHearts[i].gameObject.SetActive(shouldExist && shouldBeVisible);
+                UiScaleVisibilityAnimator animator = i < heartAnimators.Count ? heartAnimators[i] : null;
+                if (animateVisibility && animator != null)
+                {
+                    animator.SetVisible(finalVisible, !hasAppliedInitialState);
+                }
+                else
+                {
+                    spawnedHearts[i].gameObject.SetActive(finalVisible);
+                }
             }
+
+            hasAppliedInitialState = true;
         }
 
         private void EnsureHeartCount(int heartCount)
@@ -41,6 +55,7 @@ namespace BrainEaters.UI
                 heartInstance.gameObject.name = $"Heart_{spawnedHearts.Count + 1}";
                 heartInstance.gameObject.SetActive(true);
                 spawnedHearts.Add(heartInstance);
+                heartAnimators.Add(GetOrAddHeartAnimator(heartInstance));
             }
         }
 
@@ -70,7 +85,24 @@ namespace BrainEaters.UI
                 }
 
                 spawnedHearts.Add(childImage);
+                heartAnimators.Add(GetOrAddHeartAnimator(childImage));
             }
+        }
+
+        private UiScaleVisibilityAnimator GetOrAddHeartAnimator(Image heartImage)
+        {
+            if (heartImage == null)
+            {
+                return null;
+            }
+
+            UiScaleVisibilityAnimator animator = heartImage.GetComponent<UiScaleVisibilityAnimator>();
+            if (animator == null)
+            {
+                animator = heartImage.gameObject.AddComponent<UiScaleVisibilityAnimator>();
+            }
+
+            return animator;
         }
     }
 }

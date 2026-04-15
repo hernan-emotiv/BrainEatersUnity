@@ -11,6 +11,7 @@ namespace BrainEaters.Input
         public Vector2 Move => cachedInputSource?.Move ?? Vector2.zero;
         public Vector2 Look => cachedInputSource?.Look ?? Vector2.zero;
         public bool UsesFacingRelativeMovement => cachedInputSource != null && cachedInputSource.UsesFacingRelativeMovement;
+        public bool UsesDeltaLookInput => cachedInputSource != null && cachedInputSource.UsesDeltaLookInput;
         public bool IsChargeHeld => cachedInputSource != null && cachedInputSource.IsChargeHeld;
         public bool WasBombPressedThisFrame => cachedInputSource != null && cachedInputSource.WasBombPressedThisFrame;
 
