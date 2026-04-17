@@ -120,9 +120,15 @@ namespace BrainEaters.GameFlow
         {
             if (zoneRenderer != null)
             {
-                zoneRenderer.material.color = isCaptured
+                Color targetColor = isCaptured
                     ? capturedColor
                     : playerInside != null ? capturingColor : idleColor;
+
+                Material targetMaterial = Application.isPlaying ? zoneRenderer.material : zoneRenderer.sharedMaterial;
+                if (targetMaterial != null)
+                {
+                    targetMaterial.color = targetColor;
+                }
             }
 
             if (progressLabel != null)
