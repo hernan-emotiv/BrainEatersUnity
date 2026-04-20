@@ -28,6 +28,7 @@ namespace BrainEaters.EditorTools
             CreateSlopes(arenaRoot.transform);
             CreateObstacles(arenaRoot.transform);
             CreateCaptureZones(arenaRoot.transform);
+            CreatePlayerSpawnPoint(arenaRoot.transform);
             CreateSpawnPoints(arenaRoot.transform);
 
             Selection.activeGameObject = arenaRoot;
@@ -131,7 +132,7 @@ namespace BrainEaters.EditorTools
             visual.transform.localScale = new Vector3(localScale.x, localScale.y, localScale.z);
             Object.DestroyImmediate(visual.GetComponent<CapsuleCollider>());
             MeshRenderer visualRenderer = visual.GetComponent<MeshRenderer>();
-            visualRenderer.sharedMaterial = CreatePreviewMaterial(new Color(0.2f, 0.7f, 1f, 0.35f));
+            visualRenderer.sharedMaterial = CreatePreviewMaterial("Capture_Zone", new Color(0.2f, 0.7f, 1f, 0.35f));
             RegisterCreatedObject(visual);
 
             BoxCollider trigger = zoneRoot.AddComponent<BoxCollider>();
@@ -170,17 +171,26 @@ namespace BrainEaters.EditorTools
             CreateSpawnPoint(spawnRoot.transform, "SpawnPoint_06", new Vector3(22f, 0f, 0f));
         }
 
+        private static void CreatePlayerSpawnPoint(Transform parent)
+        {
+            GameObject root = new GameObject("PlayerSpawn");
+            root.transform.SetParent(parent);
+            root.transform.localPosition = Vector3.zero;
+            RegisterCreatedObject(root);
+
+            GameObject point = PlayerSpawnPointBuilder.CreatePlayerSpawnPointObject(root.transform, "PlayerSpawnPoint", new Vector3(-20f, 0f, 0f), Quaternion.Euler(0f, 90f, 0f));
+            RegisterCreatedObject(point);
+        }
+
         private static void CreateSpawnPoint(Transform parent, string pointName, Vector3 localPosition)
         {
             GameObject point = SpawnPointBuilder.CreateSpawnPointObject(parent, pointName, localPosition);
             RegisterCreatedObject(point);
         }
 
-        private static Material CreatePreviewMaterial(Color color)
+        private static Material CreatePreviewMaterial(string materialName, Color color)
         {
-            Material material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-            material.color = color;
-            return material;
+            return EditorMaterialUtility.GetOrCreateLitMaterialAsset(materialName, color);
         }
 
         private static void RegisterCreatedObject(GameObject gameObject)

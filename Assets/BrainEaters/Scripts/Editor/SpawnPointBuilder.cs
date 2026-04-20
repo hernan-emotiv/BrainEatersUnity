@@ -74,8 +74,7 @@ namespace BrainEaters.EditorTools
             }
 
             Renderer rendererComponent = marker.GetComponent<Renderer>();
-            rendererComponent.sharedMaterial = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-            rendererComponent.sharedMaterial.color = new Color(0.2f, 0.9f, 0.6f, 0.7f);
+            rendererComponent.sharedMaterial = EditorMaterialUtility.GetOrCreateLitMaterialAsset("SpawnPoint_Marker", new Color(0.2f, 0.9f, 0.6f, 0.7f));
         }
 
         private static ParticleSystem CreateAmbientParticles(Transform parent)

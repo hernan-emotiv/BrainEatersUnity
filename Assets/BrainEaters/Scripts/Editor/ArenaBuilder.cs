@@ -24,6 +24,7 @@ namespace BrainEaters.EditorTools
 
             CreateFloor(arenaRoot.transform);
             CreateWalls(arenaRoot.transform);
+            CreatePlayerSpawnPoint(arenaRoot.transform);
             CreateSpawnPoints(arenaRoot.transform);
 
             Selection.activeGameObject = arenaRoot;
@@ -69,6 +70,17 @@ namespace BrainEaters.EditorTools
             CreateSpawnPoint(spawnRoot.transform, "SpawnPoint_02", new Vector3(-8f, 0f, 8f));
             CreateSpawnPoint(spawnRoot.transform, "SpawnPoint_03", new Vector3(8f, 0f, -8f));
             CreateSpawnPoint(spawnRoot.transform, "SpawnPoint_04", new Vector3(8f, 0f, 8f));
+        }
+
+        private static void CreatePlayerSpawnPoint(Transform parent)
+        {
+            GameObject root = new GameObject("PlayerSpawn");
+            root.transform.SetParent(parent);
+            root.transform.localPosition = Vector3.zero;
+            RegisterCreatedObject(root);
+
+            GameObject point = PlayerSpawnPointBuilder.CreatePlayerSpawnPointObject(root.transform, "PlayerSpawnPoint", new Vector3(0f, 0f, -10f), Quaternion.identity);
+            RegisterCreatedObject(point);
         }
 
         private static void CreateSpawnPoint(Transform parent, string pointName, Vector3 localPosition)

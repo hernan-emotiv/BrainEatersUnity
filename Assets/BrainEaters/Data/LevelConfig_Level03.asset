@@ -14,9 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   levelId: level_03
   displayName: Collect
-  gameModeType: 0
+  gameModeType: 2
   survivalDurationSeconds: 60
-  levelPrefab: {fileID: 7935985860799826945, guid: e657b464ca4e7453299d3ca497c31393, type: 3}
+  captureDurationSeconds: 3
+  levelPrefab: {fileID: 4895053460918011189, guid: 7caad800a3e2d4b48bd793fb518c6951, type: 3}
   spawnConfig: {fileID: 11400000, guid: 9f10f36438eaf41e89e90a3ecefbbe63, type: 2}
   enemyTypes:
   - enemyPrefab: {fileID: 9137249950666637575, guid: ae181fc9dfa4441f6b036992b8510e22, type: 3}

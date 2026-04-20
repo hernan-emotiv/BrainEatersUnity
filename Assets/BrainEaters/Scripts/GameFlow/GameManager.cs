@@ -12,6 +12,8 @@ namespace BrainEaters.GameFlow
     {
         public event System.Action<GameplayState> StateChanged;
         public event System.Action<GameplayReport> GameplayFinished;
+        public event System.Action<GameModeType> ObjectiveModeChanged;
+        public event System.Action<GameModeType, int, int> ObjectiveProgressChanged;
 
         [SerializeField] private LevelConfig levelConfig;
         [SerializeField] private PlayerController playerController;
@@ -25,6 +27,7 @@ namespace BrainEaters.GameFlow
         private float damageReceived;
         private int enemiesEliminated;
         private int capturedZonesCount;
+        private int collectedPickupsCount;
         private readonly Dictionary<EnemyType, int> enemyKillCounts = new Dictionary<EnemyType, int>();
         private readonly Dictionary<EnemyType, string> enemyKillLabels = new Dictionary<EnemyType, string>();
         private bool levelRunning;
@@ -36,6 +39,11 @@ namespace BrainEaters.GameFlow
         public float RemainingSurvivalTime => Mathf.Max(0f, LevelDurationSeconds - elapsedSurvivalTime);
         public bool IsLevelRunning => levelRunning;
         public GameplayState CurrentState => currentState;
+        public GameModeType ActiveGameMode => levelConfig != null ? levelConfig.GameModeType : GameModeType.Survival;
+        public int CapturedZonesCount => capturedZonesCount;
+        public int TotalCaptureZones => currentLevelInstance != null ? currentLevelInstance.CaptureZones.Count : 0;
+        public int CollectedPickupsCount => collectedPickupsCount;
+        public int TotalCollectPickups => currentLevelInstance != null ? currentLevelInstance.CollectPickups.Count : 0;
 
         private void Awake()
         {
@@ -88,6 +96,12 @@ namespace BrainEaters.GameFlow
             if (levelConfig.GameModeType == GameModeType.Capture)
             {
                 TickCaptureMode(Time.deltaTime);
+                return;
+            }
+
+            if (levelConfig.GameModeType == GameModeType.Collect)
+            {
+                TickCollectMode();
             }
         }
 
@@ -157,6 +171,8 @@ namespace BrainEaters.GameFlow
                 return;
             }
 
+            PositionPlayerAtSpawn();
+
             cachedPlayerHealth = playerController.GetComponent<PlayerHealth>();
             if (cachedPlayerHealth != null)
             {
@@ -169,9 +185,12 @@ namespace BrainEaters.GameFlow
             damageReceived = 0f;
             enemiesEliminated = 0;
             capturedZonesCount = 0;
+            collectedPickupsCount = 0;
             ResetKillTracking();
             elapsedSurvivalTime = 0f;
             ConfigureLevelObjectives();
+            NotifyObjectiveModeChanged();
+            NotifyObjectiveProgressChanged();
             levelRunning = true;
             SetState(GameplayState.Running);
 
@@ -217,6 +236,29 @@ namespace BrainEaters.GameFlow
             currentLevelInstance = Instantiate(levelConfig.LevelPrefab, Vector3.zero, Quaternion.identity, levelRootParent);
             currentLevelInstance.name = $"{levelConfig.LevelPrefab.name}_Instance";
             currentLevelInstance.RefreshSpawnPointsIfNeeded();
+        }
+
+        private void PositionPlayerAtSpawn()
+        {
+            if (playerController == null || currentLevelInstance == null || currentLevelInstance.PlayerSpawnPoint == null)
+            {
+                return;
+            }
+
+            Transform playerTransform = playerController.transform;
+            CharacterController characterController = playerController.GetComponent<CharacterController>();
+            bool reenableCharacterController = characterController != null && characterController.enabled;
+            if (reenableCharacterController)
+            {
+                characterController.enabled = false;
+            }
+
+            playerTransform.SetPositionAndRotation(currentLevelInstance.PlayerSpawnPoint.Position, currentLevelInstance.PlayerSpawnPoint.Rotation);
+
+            if (reenableCharacterController)
+            {
+                characterController.enabled = true;
+            }
         }
 
         private void EndGameplay(GameplayState resultState)
@@ -303,6 +345,17 @@ namespace BrainEaters.GameFlow
 
                     captureZone.Captured += HandleCaptureZoneCaptured;
                 }
+
+                for (int i = 0; i < currentLevelInstance.CollectPickups.Count; i++)
+                {
+                    CollectPickup collectPickup = currentLevelInstance.CollectPickups[i];
+                    if (collectPickup == null)
+                    {
+                        continue;
+                    }
+
+                    collectPickup.Collected += HandleCollectPickupCollected;
+                }
             }
         }
 
@@ -331,6 +384,17 @@ namespace BrainEaters.GameFlow
 
                     captureZone.Captured -= HandleCaptureZoneCaptured;
                 }
+
+                for (int i = 0; i < currentLevelInstance.CollectPickups.Count; i++)
+                {
+                    CollectPickup collectPickup = currentLevelInstance.CollectPickups[i];
+                    if (collectPickup == null)
+                    {
+                        continue;
+                    }
+
+                    collectPickup.Collected -= HandleCollectPickupCollected;
+                }
             }
         }
 
@@ -351,6 +415,17 @@ namespace BrainEaters.GameFlow
 
                 captureZone.Configure(levelConfig.CaptureDurationSeconds);
                 captureZone.ResetState();
+            }
+
+            for (int i = 0; i < currentLevelInstance.CollectPickups.Count; i++)
+            {
+                CollectPickup collectPickup = currentLevelInstance.CollectPickups[i];
+                if (collectPickup == null)
+                {
+                    continue;
+                }
+
+                collectPickup.ResetState();
             }
         }
 
@@ -387,6 +462,43 @@ namespace BrainEaters.GameFlow
             if (capturedZonesCount >= totalZones)
             {
                 EndGameplay(GameplayState.Won);
+            }
+        }
+
+        private void TickCollectMode()
+        {
+            if (currentLevelInstance == null)
+            {
+                return;
+            }
+
+            int totalPickups = currentLevelInstance.CollectPickups.Count;
+            if (totalPickups == 0)
+            {
+                return;
+            }
+
+            if (collectedPickupsCount >= totalPickups)
+            {
+                EndGameplay(GameplayState.Won);
+            }
+        }
+
+        private void NotifyObjectiveModeChanged()
+        {
+            ObjectiveModeChanged?.Invoke(ActiveGameMode);
+        }
+
+        private void NotifyObjectiveProgressChanged()
+        {
+            switch (ActiveGameMode)
+            {
+                case GameModeType.Capture:
+                    ObjectiveProgressChanged?.Invoke(GameModeType.Capture, capturedZonesCount, TotalCaptureZones);
+                    break;
+                case GameModeType.Collect:
+                    ObjectiveProgressChanged?.Invoke(GameModeType.Collect, collectedPickupsCount, TotalCollectPickups);
+                    break;
             }
         }
 
@@ -476,6 +588,32 @@ namespace BrainEaters.GameFlow
             }
 
             capturedZonesCount = capturedCount;
+            NotifyObjectiveProgressChanged();
+        }
+
+        private void HandleCollectPickupCollected(CollectPickup _)
+        {
+            if (currentLevelInstance == null)
+            {
+                return;
+            }
+
+            int collectedCount = 0;
+            for (int i = 0; i < currentLevelInstance.CollectPickups.Count; i++)
+            {
+                CollectPickup collectPickup = currentLevelInstance.CollectPickups[i];
+                if (collectPickup != null && collectPickup.IsCollected)
+                {
+                    collectedCount++;
+                }
+            }
+
+            collectedPickupsCount = collectedCount;
+            NotifyObjectiveProgressChanged();
+            if (collectedPickupsCount >= currentLevelInstance.CollectPickups.Count && currentLevelInstance.CollectPickups.Count > 0)
+            {
+                EndGameplay(GameplayState.Won);
+            }
         }
     }
 }
