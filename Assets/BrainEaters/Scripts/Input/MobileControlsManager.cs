@@ -37,6 +37,8 @@ namespace BrainEaters.Input
         {
             ResolveReferences();
             BindButton();
+            useMobileControls = Application.isMobilePlatform || forceMobileControlsInEditor;
+            ApplyInputSource();
         }
 
         private void OnValidate()

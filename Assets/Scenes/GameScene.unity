@@ -1985,8 +1985,28 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4967873286271517198, guid: 5ee8ae4c3bde64258968bcb78003f448, type: 3}
+      propertyPath: cameraFollow
+      value: 
+      objectReference: {fileID: 330585548}
+    - target: {fileID: 4967873286271517198, guid: 5ee8ae4c3bde64258968bcb78003f448, type: 3}
+      propertyPath: playerInputRouter
+      value: 
+      objectReference: {fileID: 2094397940}
+    - target: {fileID: 4967873286271517198, guid: 5ee8ae4c3bde64258968bcb78003f448, type: 3}
+      propertyPath: initialControlMode
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 4967873286271517198, guid: 5ee8ae4c3bde64258968bcb78003f448, type: 3}
+      propertyPath: keyboardMouseInputSource
+      value: 
+      objectReference: {fileID: 1559121808210950831}
+    - target: {fileID: 4967873286271517198, guid: 5ee8ae4c3bde64258968bcb78003f448, type: 3}
+      propertyPath: mobileGameplayInputSource
+      value: 
+      objectReference: {fileID: 1559121808210950830}
+    - target: {fileID: 4967873286271517198, guid: 5ee8ae4c3bde64258968bcb78003f448, type: 3}
       propertyPath: forceMobileControlsInEditor
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5092333258463871569, guid: 5ee8ae4c3bde64258968bcb78003f448, type: 3}
       propertyPath: m_Name
@@ -2005,14 +2025,30 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1447006306145047698, guid: 09f0d6bd173b448e28ea60cfa53201fb, type: 3}
+      propertyPath: m_Layer
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 3138038891811787020, guid: 09f0d6bd173b448e28ea60cfa53201fb, type: 3}
+      propertyPath: m_Layer
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 4593628418395658805, guid: 09f0d6bd173b448e28ea60cfa53201fb, type: 3}
       propertyPath: m_Name
       value: Player
+      objectReference: {fileID: 0}
+    - target: {fileID: 4593628418395658805, guid: 09f0d6bd173b448e28ea60cfa53201fb, type: 3}
+      propertyPath: m_Layer
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 4739673312583707883, guid: 09f0d6bd173b448e28ea60cfa53201fb, type: 3}
       propertyPath: bombButton
       value: 
       objectReference: {fileID: 1674263302}
+    - target: {fileID: 4739673312583707883, guid: 09f0d6bd173b448e28ea60cfa53201fb, type: 3}
+      propertyPath: controlMode
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 4739673312583707883, guid: 09f0d6bd173b448e28ea60cfa53201fb, type: 3}
       propertyPath: chargeButton
       value: 
@@ -2077,15 +2113,45 @@ PrefabInstance:
       propertyPath: cameraTransform
       value: 
       objectReference: {fileID: 330585546}
+    - target: {fileID: 6033100770219183424, guid: 09f0d6bd173b448e28ea60cfa53201fb, type: 3}
+      propertyPath: m_Layer
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 6785675212380952867, guid: 09f0d6bd173b448e28ea60cfa53201fb, type: 3}
       propertyPath: enableMouseLook
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7293641576178983767, guid: 09f0d6bd173b448e28ea60cfa53201fb, type: 3}
+      propertyPath: m_Layer
+      value: 3
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 09f0d6bd173b448e28ea60cfa53201fb, type: 3}
+--- !u!114 &1559121808210950830 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4739673312583707883, guid: 09f0d6bd173b448e28ea60cfa53201fb, type: 3}
+  m_PrefabInstance: {fileID: 1559121808210950829}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 76d2e386fbcd64c1abb21d5b05da4bce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &1559121808210950831 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6785675212380952867, guid: 09f0d6bd173b448e28ea60cfa53201fb, type: 3}
+  m_PrefabInstance: {fileID: 1559121808210950829}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46c1fed9166a84ce5b4e5728d88ca114, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &3220347090237283463
 PrefabInstance:
   m_ObjectHideFlags: 0

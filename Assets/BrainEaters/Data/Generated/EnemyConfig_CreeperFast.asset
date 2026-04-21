@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e8eebe552bfe489ba0c269c5e3b0670, type: 3}
+  m_Name: EnemyConfig_CreeperFast
+  m_EditorClassIdentifier: 
+  enemyType: 1
+  displayName: Creeper Fast
+  maxHealth: 1
+  moveSpeed: 4.25
+  turnSpeed: 900
+  stopDistance: 1
+  attackRange: 1.35
+  attackDamage: 1
+  attackHitDelaySeconds: 0.2
+  attackDurationSeconds: 0.55
+  attackCooldownSeconds: 0.8
+  attackVisualDurationSeconds: 0.12
+  useAttackVisual: 1
+  attackHitboxHalfExtents: {x: 0.45, y: 0.7, z: 0.55}
+  destroyDelaySeconds: 1.5

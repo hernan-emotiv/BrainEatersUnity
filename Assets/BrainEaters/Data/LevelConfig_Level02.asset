@@ -18,7 +18,9 @@ MonoBehaviour:
   survivalDurationSeconds: 60
   captureDurationSeconds: 3
   levelPrefab: {fileID: 2773713936382250950, guid: a34152d55d4eb43e7b4cd1e76605945b, type: 3}
-  spawnConfig: {fileID: 11400000, guid: 9f10f36438eaf41e89e90a3ecefbbe63, type: 2}
+  spawnConfig: {fileID: 11400000, guid: 96a7acd651c734a878f3c02ffce07cd2, type: 2}
   enemyTypes:
   - enemyPrefab: {fileID: 9137249950666637575, guid: ae181fc9dfa4441f6b036992b8510e22, type: 3}
     enemyConfig: {fileID: 11400000, guid: bbf3e4311eb544976a8245c372744be7, type: 2}
+  - enemyPrefab: {fileID: 7890462251798360025, guid: ca9c91c80f06b4e67b1b347f7185e697, type: 3}
+    enemyConfig: {fileID: 11400000, guid: ae4e185e672a34ddcae70c0000535085, type: 2}

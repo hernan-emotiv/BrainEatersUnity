@@ -1,5 +1,6 @@
 using BrainEaters.GameFlow;
 using BrainEaters.Spawning;
+using BrainEaters.Turrets;
 using TMPro;
 using UnityEditor;
 using UnityEngine;
@@ -29,6 +30,7 @@ namespace BrainEaters.EditorTools
             CreateObstacles(arenaRoot.transform);
             CreateCaptureZones(arenaRoot.transform);
             CreatePlayerSpawnPoint(arenaRoot.transform);
+            CreateTurrets(arenaRoot.transform);
             CreateSpawnPoints(arenaRoot.transform);
 
             Selection.activeGameObject = arenaRoot;
@@ -169,6 +171,52 @@ namespace BrainEaters.EditorTools
             CreateSpawnPoint(spawnRoot.transform, "SpawnPoint_04", new Vector3(18f, 0f, 18f));
             CreateSpawnPoint(spawnRoot.transform, "SpawnPoint_05", new Vector3(0f, 0f, 22f));
             CreateSpawnPoint(spawnRoot.transform, "SpawnPoint_06", new Vector3(22f, 0f, 0f));
+        }
+
+        private static void CreateTurrets(Transform parent)
+        {
+            TurretBuilder.BuildTurretPrefab();
+            GameObject turretPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(TurretBuilder.TurretPrefabPathForEditor);
+            if (turretPrefab == null)
+            {
+                return;
+            }
+
+            GameObject turretsRoot = new GameObject("Turrets");
+            turretsRoot.transform.SetParent(parent);
+            RegisterCreatedObject(turretsRoot);
+
+            CreateTurretInstance(turretPrefab, turretsRoot.transform, "CaptureTurret_A", new Vector3(-8f, 0f, 8f), Quaternion.Euler(0f, 35f, 0f), TurretActivationMode.BuildZone, null);
+
+            CaptureZone[] captureZones = parent.GetComponentsInChildren<CaptureZone>(true);
+            CaptureZone captureZone = captureZones.Length > 0 ? captureZones[0] : null;
+            CreateTurretInstance(turretPrefab, turretsRoot.transform, "CaptureTurret_B", new Vector3(10f, 0f, -6f), Quaternion.Euler(0f, -35f, 0f), TurretActivationMode.CaptureZone, captureZone);
+        }
+
+        private static void CreateTurretInstance(GameObject turretPrefab, Transform parent, string turretName, Vector3 localPosition, Quaternion localRotation, TurretActivationMode mode, CaptureZone captureZone)
+        {
+            GameObject turretInstance = PrefabUtility.InstantiatePrefab(turretPrefab) as GameObject;
+            if (turretInstance == null)
+            {
+                return;
+            }
+
+            turretInstance.name = turretName;
+            turretInstance.transform.SetParent(parent);
+            turretInstance.transform.localPosition = localPosition;
+            turretInstance.transform.localRotation = localRotation;
+            RegisterCreatedObject(turretInstance);
+
+            TurretController controller = turretInstance.GetComponent<TurretController>();
+            if (controller != null)
+            {
+                SerializedObject serializedObject = new SerializedObject(controller);
+                serializedObject.FindProperty("activationMode").enumValueIndex = (int)mode;
+                serializedObject.FindProperty("captureZone").objectReferenceValue = captureZone;
+                serializedObject.FindProperty("canBeDamaged").boolValue = true;
+                serializedObject.ApplyModifiedPropertiesWithoutUndo();
+                controller.ResetState();
+            }
         }
 
         private static void CreatePlayerSpawnPoint(Transform parent)

@@ -8,12 +8,12 @@ namespace BrainEaters.Input
 
         private IGameplayInputSource cachedInputSource;
 
-        public Vector2 Move => cachedInputSource?.Move ?? Vector2.zero;
-        public Vector2 Look => cachedInputSource?.Look ?? Vector2.zero;
-        public bool UsesFacingRelativeMovement => cachedInputSource != null && cachedInputSource.UsesFacingRelativeMovement;
-        public bool UsesDeltaLookInput => cachedInputSource != null && cachedInputSource.UsesDeltaLookInput;
-        public bool IsChargeHeld => cachedInputSource != null && cachedInputSource.IsChargeHeld;
-        public bool WasBombPressedThisFrame => cachedInputSource != null && cachedInputSource.WasBombPressedThisFrame;
+        public Vector2 Move => GetResolvedInputSource()?.Move ?? Vector2.zero;
+        public Vector2 Look => GetResolvedInputSource()?.Look ?? Vector2.zero;
+        public bool UsesFacingRelativeMovement => GetResolvedInputSource() != null && GetResolvedInputSource().UsesFacingRelativeMovement;
+        public bool UsesDeltaLookInput => GetResolvedInputSource() != null && GetResolvedInputSource().UsesDeltaLookInput;
+        public bool IsChargeHeld => GetResolvedInputSource() != null && GetResolvedInputSource().IsChargeHeld;
+        public bool WasBombPressedThisFrame => GetResolvedInputSource() != null && GetResolvedInputSource().WasBombPressedThisFrame;
 
         private void Awake()
         {
@@ -31,18 +31,37 @@ namespace BrainEaters.Input
             ResolveInputSource();
         }
 
+        private IGameplayInputSource GetResolvedInputSource()
+        {
+            if (cachedInputSource == null || activeInputSource == null || !activeInputSource.isActiveAndEnabled)
+            {
+                ResolveInputSource();
+            }
+
+            return cachedInputSource;
+        }
+
         private void ResolveInputSource()
         {
-            cachedInputSource = activeInputSource as IGameplayInputSource;
+            cachedInputSource = null;
 
-            if (cachedInputSource != null)
+            if (activeInputSource != null && activeInputSource.isActiveAndEnabled)
             {
-                return;
+                cachedInputSource = activeInputSource as IGameplayInputSource;
+                if (cachedInputSource != null)
+                {
+                    return;
+                }
             }
 
             MonoBehaviour[] candidates = GetComponents<MonoBehaviour>();
             foreach (MonoBehaviour candidate in candidates)
             {
+                if (candidate == null || !candidate.isActiveAndEnabled)
+                {
+                    continue;
+                }
+
                 if (candidate is IGameplayInputSource gameplayInputSource)
                 {
                     activeInputSource = candidate;

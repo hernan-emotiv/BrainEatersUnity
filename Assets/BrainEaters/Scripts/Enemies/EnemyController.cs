@@ -1,5 +1,6 @@
 using BrainEaters.Configs;
 using BrainEaters.Player;
+using BrainEaters.Turrets;
 using UnityEngine;
 
 namespace BrainEaters.Enemies
@@ -13,10 +14,12 @@ namespace BrainEaters.Enemies
         [SerializeField] private EnemyHealth enemyHealth;
         [SerializeField] private EnemyAttack enemyAttack;
         [SerializeField] private EnemyAnimatorDriver enemyAnimatorDriver;
+        [SerializeField] private EnemyHopVisual enemyHopVisual;
         [SerializeField] private Transform target;
         [SerializeField] private EnemyConfig enemyConfig;
 
         private PlayerHealth targetHealth;
+        private TurretHealth turretTargetHealth;
 
         private void Awake()
         {
@@ -53,29 +56,43 @@ namespace BrainEaters.Enemies
                 enemyAnimatorDriver.ResetState();
             }
 
+            if (enemyHopVisual != null)
+            {
+                enemyHopVisual.ResetState();
+            }
+
             targetHealth = targetTransform != null ? targetTransform.GetComponent<PlayerHealth>() : null;
+            turretTargetHealth = null;
         }
 
         private void Update()
         {
-            if (target == null || enemyHealth == null || !enemyHealth.IsAlive)
+            if (enemyHealth == null || !enemyHealth.IsAlive)
             {
                 return;
             }
 
-            if (targetHealth == null)
+            ResolveCombatTarget();
+            if (target == null)
+            {
+                return;
+            }
+
+            if (targetHealth == null && turretTargetHealth == null)
             {
                 targetHealth = target.GetComponent<PlayerHealth>();
             }
 
             if (enemyAttack != null && enemyAttack.IsAttacking)
             {
+                enemyHopVisual?.SetMoving(false);
                 enemyMovement.FaceTowards(target.position, Time.deltaTime);
                 return;
             }
 
             if (enemyAttack != null && enemyAttack.IsTargetInRange(target.position))
             {
+                enemyHopVisual?.SetMoving(false);
                 enemyMovement.FaceTowards(target.position, Time.deltaTime);
 
                 if (enemyAttack.TryAttack())
@@ -91,6 +108,7 @@ namespace BrainEaters.Enemies
             }
 
             bool moved = enemyMovement.Tick(target.position, Time.deltaTime);
+            enemyHopVisual?.SetMoving(moved);
             if (moved)
             {
                 enemyAnimatorDriver?.PlayWalk();
@@ -121,6 +139,58 @@ namespace BrainEaters.Enemies
             if (enemyAnimatorDriver == null)
             {
                 enemyAnimatorDriver = GetComponent<EnemyAnimatorDriver>();
+            }
+
+            if (enemyHopVisual == null)
+            {
+                enemyHopVisual = GetComponent<EnemyHopVisual>();
+            }
+        }
+
+        private void ResolveCombatTarget()
+        {
+            Transform playerTarget = targetHealth != null ? targetHealth.transform : target;
+            if (playerTarget != null && targetHealth == null)
+            {
+                targetHealth = playerTarget.GetComponent<PlayerHealth>();
+            }
+
+            TurretHealth nearestTurret = TurretTargetRegistry.GetNearestTarget(transform.position);
+            bool canTargetPlayer = targetHealth != null && targetHealth.IsAlive;
+            bool canTargetTurret = nearestTurret != null && nearestTurret.IsTargetable;
+
+            if (!canTargetPlayer && !canTargetTurret)
+            {
+                target = null;
+                turretTargetHealth = null;
+                return;
+            }
+
+            if (canTargetPlayer && !canTargetTurret)
+            {
+                target = targetHealth.transform;
+                turretTargetHealth = null;
+                return;
+            }
+
+            if (!canTargetPlayer && canTargetTurret)
+            {
+                turretTargetHealth = nearestTurret;
+                target = turretTargetHealth.TargetPoint;
+                return;
+            }
+
+            float playerDistanceSqr = (targetHealth.transform.position - transform.position).sqrMagnitude;
+            float turretDistanceSqr = (nearestTurret.TargetPoint.position - transform.position).sqrMagnitude;
+            if (turretDistanceSqr < playerDistanceSqr)
+            {
+                turretTargetHealth = nearestTurret;
+                target = turretTargetHealth.TargetPoint;
+            }
+            else
+            {
+                turretTargetHealth = null;
+                target = targetHealth.transform;
             }
         }
     }

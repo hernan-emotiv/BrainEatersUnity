@@ -6,7 +6,8 @@ namespace BrainEaters.Input
     public class KeyboardMouseInputSource : MonoBehaviour, IGameplayInputSource
     {
         [SerializeField] private bool enableMouseLook = true;
-        [SerializeField] private bool requireMouseButtonForLook;
+        [SerializeField] private bool requireMouseButtonForLook = true;
+        [SerializeField] private bool lockCursorWhileLooking = true;
         [SerializeField] private float mouseLookSensitivity = 0.015f;
 
         public Vector2 Move { get; private set; }
@@ -21,6 +22,7 @@ namespace BrainEaters.Input
             Keyboard keyboard = Keyboard.current;
             Mouse mouse = Mouse.current;
 
+            UpdateCursorState(mouse);
             Move = ReadMove(keyboard);
             Look = ReadLook(mouse);
             IsChargeHeld =
@@ -32,6 +34,15 @@ namespace BrainEaters.Input
                 (keyboard != null && keyboard.qKey.wasPressedThisFrame);
         }
 
+        private void OnDisable()
+        {
+            if (Cursor.lockState == CursorLockMode.Locked)
+            {
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
+            }
+        }
+
         private Vector2 ReadLook(Mouse mouse)
         {
             if (!enableMouseLook || mouse == null)
@@ -39,12 +50,29 @@ namespace BrainEaters.Input
                 return Vector2.zero;
             }
 
-            if (requireMouseButtonForLook && !mouse.rightButton.isPressed)
+            if (requireMouseButtonForLook && !IsAnyMouseButtonPressed(mouse))
             {
                 return Vector2.zero;
             }
 
             return mouse.delta.ReadValue() * mouseLookSensitivity;
+        }
+
+        private void UpdateCursorState(Mouse mouse)
+        {
+            if (!enableMouseLook || !lockCursorWhileLooking || mouse == null || !Application.isPlaying)
+            {
+                return;
+            }
+
+            bool shouldLock = !requireMouseButtonForLook || IsAnyMouseButtonPressed(mouse);
+            Cursor.lockState = shouldLock ? CursorLockMode.Locked : CursorLockMode.None;
+            Cursor.visible = !shouldLock;
+        }
+
+        private static bool IsAnyMouseButtonPressed(Mouse mouse)
+        {
+            return mouse.leftButton.isPressed || mouse.rightButton.isPressed || mouse.middleButton.isPressed;
         }
 
         private static Vector2 ReadMove(Keyboard keyboard)

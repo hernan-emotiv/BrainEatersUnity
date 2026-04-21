@@ -29,6 +29,10 @@ namespace BrainEaters.Cameras
             if (inputRouter == null && target != null)
             {
                 inputRouter = target.GetComponent<PlayerInputRouter>();
+                if (inputRouter == null)
+                {
+                    inputRouter = target.GetComponentInParent<PlayerInputRouter>();
+                }
             }
 
             orbitInitialized = false;
@@ -122,6 +126,10 @@ namespace BrainEaters.Cameras
             if (inputRouter == null && target != null)
             {
                 inputRouter = target.GetComponent<PlayerInputRouter>();
+                if (inputRouter == null)
+                {
+                    inputRouter = target.GetComponentInParent<PlayerInputRouter>();
+                }
             }
         }
 

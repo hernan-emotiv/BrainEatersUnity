@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace BrainEaters.Input
 {
@@ -27,8 +28,9 @@ namespace BrainEaters.Input
 
         private void Update()
         {
-            Vector2 moveValue = GetMoveInput();
+            Vector2 moveValue = CombineMoveInput(GetMoveInput(), ReadKeyboardMove());
             Vector2 lookValue = GetLookInput();
+            Keyboard keyboard = Keyboard.current;
 
             if (controlMode == MobileControlMode.DualJoystick || controlMode == MobileControlMode.InvisibleJoysticks)
             {
@@ -41,8 +43,13 @@ namespace BrainEaters.Input
                 Look = new Vector2(moveValue.x, 0f);
             }
 
-            IsChargeHeld = chargeButton != null && chargeButton.IsPressed;
-            WasBombPressedThisFrame = bombButton != null && bombButton.ConsumePressedThisFrame();
+            IsChargeHeld =
+                (chargeButton != null && chargeButton.IsPressed) ||
+                (keyboard != null && keyboard.spaceKey.isPressed);
+
+            WasBombPressedThisFrame =
+                (bombButton != null && bombButton.ConsumePressedThisFrame()) ||
+                (keyboard != null && keyboard.qKey.wasPressedThisFrame);
         }
 
         private Vector2 GetMoveInput()
@@ -63,6 +70,47 @@ namespace BrainEaters.Input
             }
 
             return lookJoystick != null ? lookJoystick.Value : Vector2.zero;
+        }
+
+        private static Vector2 CombineMoveInput(Vector2 primaryInput, Vector2 keyboardInput)
+        {
+            Vector2 combined = primaryInput + keyboardInput;
+            return combined.sqrMagnitude > 1f ? combined.normalized : combined;
+        }
+
+        private static Vector2 ReadKeyboardMove()
+        {
+            Keyboard keyboard = Keyboard.current;
+            if (keyboard == null)
+            {
+                return Vector2.zero;
+            }
+
+            float horizontal = 0f;
+            float vertical = 0f;
+
+            if (keyboard.aKey.isPressed || keyboard.leftArrowKey.isPressed)
+            {
+                horizontal -= 1f;
+            }
+
+            if (keyboard.dKey.isPressed || keyboard.rightArrowKey.isPressed)
+            {
+                horizontal += 1f;
+            }
+
+            if (keyboard.sKey.isPressed || keyboard.downArrowKey.isPressed)
+            {
+                vertical -= 1f;
+            }
+
+            if (keyboard.wKey.isPressed || keyboard.upArrowKey.isPressed)
+            {
+                vertical += 1f;
+            }
+
+            Vector2 input = new Vector2(horizontal, vertical);
+            return input.sqrMagnitude > 1f ? input.normalized : input;
         }
     }
 }
