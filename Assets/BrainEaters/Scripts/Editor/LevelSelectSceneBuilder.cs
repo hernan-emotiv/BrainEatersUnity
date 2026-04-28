@@ -2,6 +2,7 @@ using BrainEaters.LevelSelect;
 using BrainEaters.UI;
 using TMPro;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -14,8 +15,11 @@ namespace BrainEaters.EditorTools
         private const string TutorialReferencePath = "Assets/BrainEaters/Textures/UI references/tutorial popup.png";
         private const string HowToPlayReferencePath = "Assets/BrainEaters/Textures/UI references/how to play popup.png";
         private const string YellowButtonPath = "Assets/BrainEaters/Textures/UI references/Generated/button_yellow.png";
+        private const string BlueButtonPath = "Assets/BrainEaters/Textures/UI references/Generated/button_blue.png";
         private const string GreenButtonPath = "Assets/BrainEaters/Textures/UI references/Generated/button_green.png";
         private const string ButtonFontPath = "Assets/TextMesh Pro/Examples & Extras/Resources/Fonts & Materials/Anton SDF.asset";
+        private const string UiDataFolderPath = "Assets/BrainEaters/Data/UI";
+        private const string ButtonTextStylePath = UiDataFolderPath + "/ButtonTextStyle_BrainEaters.asset";
 
         [MenuItem("Brain Eaters/Create Level Select UI")]
         public static void CreateLevelSelectUi()
@@ -127,6 +131,42 @@ namespace BrainEaters.EditorTools
             EditorGUIUtility.PingObject(managerObject);
         }
 
+        [MenuItem("Brain Eaters/UI/Apply Menu Button Style In Current Scene")]
+        public static void ApplyMenuButtonStyleInCurrentScene()
+        {
+            Sprite yellowButtonSprite = EnsureSprite(YellowButtonPath);
+            Sprite blueButtonSprite = EnsureSprite(BlueButtonPath);
+            Sprite greenButtonSprite = EnsureSprite(GreenButtonPath);
+            ButtonTextStyle buttonTextStyle = EnsureButtonTextStyle();
+
+            Button[] buttons = Object.FindObjectsByType<Button>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            int styledCount = 0;
+            foreach (Button button in buttons)
+            {
+                if (button == null || !TryGetSpriteForButton(button.name, yellowButtonSprite, blueButtonSprite, greenButtonSprite, out Sprite sprite))
+                {
+                    continue;
+                }
+
+                Undo.RecordObject(button.gameObject, "Apply Menu Button Style");
+                ApplyButtonImageStyle(button, sprite);
+
+                TMP_Text[] labels = button.GetComponentsInChildren<TMP_Text>(true);
+                foreach (TMP_Text label in labels)
+                {
+                    Undo.RecordObject(label, "Apply Menu Button Text Style");
+                    ApplyButtonTextStyle(label, buttonTextStyle);
+                    EditorUtility.SetDirty(label);
+                }
+
+                EditorUtility.SetDirty(button.gameObject);
+                styledCount++;
+            }
+
+            EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
+            Debug.Log($"Applied Brain Eaters menu button style to {styledCount} button(s) in the current scene.");
+        }
+
         private static void CreateMainMenuFlow(Transform managerRoot, GameObject levelSelectRoot, MainMenuFlowController flowController, Object campaignConfig)
         {
             Sprite mainMenuReference = EnsureSprite(MainMenuReferencePath);
@@ -134,6 +174,7 @@ namespace BrainEaters.EditorTools
             Sprite howToPlayReference = EnsureSprite(HowToPlayReferencePath);
             Sprite yellowButtonSprite = EnsureSprite(YellowButtonPath);
             Sprite greenButtonSprite = EnsureSprite(GreenButtonPath);
+            ButtonTextStyle buttonTextStyle = EnsureButtonTextStyle();
 
             GameObject mainMenuRoot = GetOrCreateUiChild(managerRoot, "MainMenuRoot");
             StretchFull(mainMenuRoot.GetComponent<RectTransform>());
@@ -143,14 +184,14 @@ namespace BrainEaters.EditorTools
             mainMenuImage.preserveAspect = true;
             mainMenuImage.raycastTarget = false;
 
-            Button howButton = CreateMenuButton(mainMenuRoot.transform, "HowButton", "HOW", new Vector2(-220f, 78f), yellowButtonSprite);
-            Button playButton = CreateMenuButton(mainMenuRoot.transform, "PlayButton", "PLAY", new Vector2(220f, 78f), greenButtonSprite);
+            Button howButton = CreateMenuButton(mainMenuRoot.transform, "HowButton", "HOW", new Vector2(-220f, 78f), yellowButtonSprite, buttonTextStyle);
+            Button playButton = CreateMenuButton(mainMenuRoot.transform, "PlayButton", "PLAY", new Vector2(220f, 78f), greenButtonSprite, buttonTextStyle);
 
             GameObject tutorialPopupRoot = CreateReferencePopup(managerRoot, "TutorialPopupRoot", tutorialReference);
-            Button tutorialStartButton = CreateMenuButton(tutorialPopupRoot.transform, "StartButton", "START", new Vector2(0f, 76f), greenButtonSprite);
+            Button tutorialStartButton = CreateMenuButton(tutorialPopupRoot.transform, "StartButton", "START", new Vector2(0f, 76f), greenButtonSprite, buttonTextStyle);
 
             GameObject howToPlayPopupRoot = CreateReferencePopup(managerRoot, "HowToPlayPopupRoot", howToPlayReference);
-            Button howBackButton = CreateMenuButton(howToPlayPopupRoot.transform, "BackButton", "BACK", new Vector2(0f, 76f), yellowButtonSprite);
+            Button howBackButton = CreateMenuButton(howToPlayPopupRoot.transform, "BackButton", "BACK", new Vector2(0f, 76f), yellowButtonSprite, buttonTextStyle);
 
             SerializedObject flowObject = new SerializedObject(flowController);
             flowObject.FindProperty("campaignConfig").objectReferenceValue = campaignConfig;
@@ -183,7 +224,7 @@ namespace BrainEaters.EditorTools
             return root;
         }
 
-        private static Button CreateMenuButton(Transform parent, string name, string label, Vector2 anchoredPosition, Sprite sprite)
+        private static Button CreateMenuButton(Transform parent, string name, string label, Vector2 anchoredPosition, Sprite sprite, ButtonTextStyle buttonTextStyle)
         {
             GameObject root = GetOrCreateUiChild(parent, name);
             RectTransform rect = root.GetComponent<RectTransform>();
@@ -199,29 +240,16 @@ namespace BrainEaters.EditorTools
                 image = Undo.AddComponent<Image>(root);
             }
 
-            image.sprite = sprite;
-            image.color = Color.white;
-            image.type = Image.Type.Simple;
-            image.preserveAspect = true;
-
             Button button = root.GetComponent<Button>();
             if (button == null)
             {
                 button = Undo.AddComponent<Button>(root);
             }
 
+            ApplyButtonImageStyle(button, sprite);
+
             TMP_Text labelText = CreateLabel(root.transform, "Label", label, 46f, new Vector2(0f, 6f), rect.sizeDelta);
-            StretchFull(labelText.rectTransform);
-            labelText.rectTransform.offsetMin = new Vector2(0f, 8f);
-            labelText.rectTransform.offsetMax = new Vector2(0f, -4f);
-            labelText.alignment = TextAlignmentOptions.Center;
-            labelText.font = LoadButtonFont();
-            labelText.fontStyle = FontStyles.UpperCase;
-            labelText.characterSpacing = 2f;
-            labelText.color = Color.white;
-            labelText.enableWordWrapping = false;
-            labelText.overflowMode = TextOverflowModes.Overflow;
-            ApplyButtonTextMaterial(labelText);
+            ApplyButtonTextStyle(labelText, buttonTextStyle);
             return button;
         }
 
@@ -352,35 +380,136 @@ namespace BrainEaters.EditorTools
             return sprite;
         }
 
+        [MenuItem("Brain Eaters/UI/Create Or Refresh Button Text Style Preset")]
+        public static void CreateOrRefreshButtonTextStylePreset()
+        {
+            ButtonTextStyle style = EnsureButtonTextStyle();
+            EditorUtility.SetDirty(style);
+            Selection.activeObject = style;
+            EditorGUIUtility.PingObject(style);
+        }
+
+        [MenuItem("Brain Eaters/UI/Apply Text Style To Selected TMP Text")]
+        public static void ApplyTextStyleToSelectedTmpText()
+        {
+            ApplyTextStyleToSelectedTmpText(false);
+        }
+
+        [MenuItem("Brain Eaters/UI/Apply Text Style To Selected TMP Text Uppercase")]
+        public static void ApplyTextStyleToSelectedTmpTextUppercase()
+        {
+            ApplyTextStyleToSelectedTmpText(true);
+        }
+
         private static TMP_FontAsset LoadButtonFont()
         {
             TMP_FontAsset font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(ButtonFontPath);
             return font != null ? font : TMP_Settings.defaultFontAsset;
         }
 
-        private static void ApplyButtonTextMaterial(TMP_Text text)
+        private static ButtonTextStyle EnsureButtonTextStyle()
         {
-            if (text == null || text.font == null || text.font.material == null)
+            ButtonTextStyle style = AssetDatabase.LoadAssetAtPath<ButtonTextStyle>(ButtonTextStylePath);
+            if (style != null)
+            {
+                return style;
+            }
+
+            if (!AssetDatabase.IsValidFolder(UiDataFolderPath))
+            {
+                if (!AssetDatabase.IsValidFolder("Assets/BrainEaters/Data"))
+                {
+                    AssetDatabase.CreateFolder("Assets/BrainEaters", "Data");
+                }
+
+                AssetDatabase.CreateFolder("Assets/BrainEaters/Data", "UI");
+            }
+
+            style = ScriptableObject.CreateInstance<ButtonTextStyle>();
+            style.ConfigureFont(LoadButtonFont());
+            AssetDatabase.CreateAsset(style, ButtonTextStylePath);
+            AssetDatabase.SaveAssets();
+            return style;
+        }
+
+        private static void ApplyTextStyleToSelectedTmpText(bool forceUppercase)
+        {
+            ButtonTextStyle style = EnsureButtonTextStyle();
+            TMP_Text[] selectedTexts = Selection.GetFiltered<TMP_Text>(SelectionMode.Editable | SelectionMode.Deep);
+            if (selectedTexts == null || selectedTexts.Length == 0)
+            {
+                Debug.LogWarning("Select one or more TextMeshProUGUI/TMP_Text objects before applying the Brain Eaters text style.");
+                return;
+            }
+
+            foreach (TMP_Text text in selectedTexts)
+            {
+                Undo.RecordObject(text, "Apply Brain Eaters TMP Text Style");
+                style.ApplyTo(text, forceUppercase);
+                EditorUtility.SetDirty(text);
+            }
+
+            EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
+            Debug.Log($"Applied Brain Eaters TMP text style to {selectedTexts.Length} selected text object(s). Uppercase: {forceUppercase}.");
+        }
+
+        private static bool TryGetSpriteForButton(string buttonName, Sprite yellowButtonSprite, Sprite blueButtonSprite, Sprite greenButtonSprite, out Sprite sprite)
+        {
+            string normalizedName = buttonName.ToLowerInvariant();
+            if (normalizedName.Contains("play") || normalizedName.Contains("start") || normalizedName.Contains("continue"))
+            {
+                sprite = greenButtonSprite;
+                return true;
+            }
+
+            if (normalizedName.Contains("how") || normalizedName.Contains("back") || normalizedName.Contains("retry"))
+            {
+                sprite = yellowButtonSprite;
+                return true;
+            }
+
+            if (normalizedName.Contains("level") || normalizedName.Contains("select") || normalizedName.Contains("menu"))
+            {
+                sprite = blueButtonSprite;
+                return true;
+            }
+
+            sprite = null;
+            return false;
+        }
+
+        private static void ApplyButtonImageStyle(Button button, Sprite sprite)
+        {
+            if (button == null)
             {
                 return;
             }
 
-            Material material = new Material(text.font.material)
+            Image image = button.GetComponent<Image>();
+            if (image == null)
             {
-                name = $"{text.name}_ButtonTextMaterial"
-            };
+                image = Undo.AddComponent<Image>(button.gameObject);
+            }
 
-            material.SetFloat(ShaderUtilities.ID_FaceDilate, 0.08f);
-            material.SetFloat(ShaderUtilities.ID_OutlineWidth, 0.18f);
-            material.SetFloat(ShaderUtilities.ID_OutlineSoftness, 0.02f);
-            material.SetColor(ShaderUtilities.ID_OutlineColor, new Color(0.42f, 0.25f, 0.08f, 1f));
-            material.SetFloat(ShaderUtilities.ID_UnderlayOffsetX, 0.45f);
-            material.SetFloat(ShaderUtilities.ID_UnderlayOffsetY, -0.65f);
-            material.SetFloat(ShaderUtilities.ID_UnderlayDilate, 0.18f);
-            material.SetFloat(ShaderUtilities.ID_UnderlaySoftness, 0.25f);
-            material.SetColor(ShaderUtilities.ID_UnderlayColor, new Color(0f, 0f, 0f, 0.42f));
-            material.EnableKeyword("UNDERLAY_ON");
-            text.fontSharedMaterial = material;
+            image.sprite = sprite;
+            image.color = Color.white;
+            image.type = Image.Type.Simple;
+            image.preserveAspect = true;
+            image.raycastTarget = true;
+            button.targetGraphic = image;
+        }
+
+        private static void ApplyButtonTextStyle(TMP_Text labelText, ButtonTextStyle buttonTextStyle)
+        {
+            if (labelText == null)
+            {
+                return;
+            }
+
+            if (buttonTextStyle != null)
+            {
+                buttonTextStyle.ApplyTo(labelText, true);
+            }
         }
 
         private static void StretchFull(RectTransform rectTransform)

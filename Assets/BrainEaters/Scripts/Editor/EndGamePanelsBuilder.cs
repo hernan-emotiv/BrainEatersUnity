@@ -1,6 +1,8 @@
+using BrainEaters.GameFlow;
 using BrainEaters.UI;
 using TMPro;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -24,12 +26,6 @@ namespace BrainEaters.EditorTools
                 return;
             }
 
-            EndGamePanelController controller = canvas.GetComponent<EndGamePanelController>();
-            if (controller == null)
-            {
-                controller = Undo.AddComponent<EndGamePanelController>(canvas.gameObject);
-            }
-
             GameObject overlayRoot = GetOrCreateUIChild(canvas.transform, "EndGamePanelsRoot");
             RectTransform overlayRect = overlayRoot.GetComponent<RectTransform>();
             StretchFullScreen(overlayRect);
@@ -46,7 +42,122 @@ namespace BrainEaters.EditorTools
             Button loseRetryButton = CreateOrUpdateButton(losePanel.transform, "RetryButton", "Retry", new Vector2(-120f, -470f), new Vector2(220f, 56f));
             Button loseBackButton = CreateOrUpdateButton(losePanel.transform, "BackToMenuButton", "Back to Menu", new Vector2(120f, -470f), new Vector2(220f, 56f));
 
+            EndGamePanelController controller = EnsureControllerOnRoot(overlayRoot);
+            AssignControllerReferences(
+                controller,
+                winPanel,
+                losePanel,
+                winTitle,
+                winReport,
+                loseTitle,
+                loseReport,
+                winRetryButton,
+                loseRetryButton,
+                winBackButton,
+                loseBackButton,
+                Object.FindFirstObjectByType<GameManager>());
+            RemoveMisplacedControllers(canvas.gameObject, overlayRoot);
+
+            winPanel.SetActive(false);
+            losePanel.SetActive(false);
+
+            EditorSceneManager.MarkSceneDirty(canvas.gameObject.scene);
+            Selection.activeGameObject = overlayRoot;
+            EditorGUIUtility.PingObject(overlayRoot);
+        }
+
+        [MenuItem("Brain Eaters/UI/Repair End Game Panel Controller In Current Scene")]
+        public static void RepairEndGamePanelControllerInCurrentScene()
+        {
+            Canvas canvas = Object.FindFirstObjectByType<Canvas>();
+            if (canvas == null)
+            {
+                Debug.LogError("No Canvas found in the current scene.");
+                return;
+            }
+
+            Transform rootTransform = canvas.transform.Find("EndGamePanelsRoot");
+            if (rootTransform == null)
+            {
+                Debug.LogError("No EndGamePanelsRoot found under the current scene Canvas.");
+                return;
+            }
+
+            EndGamePanelController controller = EnsureControllerOnRoot(rootTransform.gameObject);
+            AssignControllerReferencesFromHierarchy(controller, Object.FindFirstObjectByType<GameManager>());
+            RemoveMisplacedControllers(canvas.gameObject, rootTransform.gameObject);
+            EditorSceneManager.MarkSceneDirty(canvas.gameObject.scene);
+            Selection.activeGameObject = rootTransform.gameObject;
+            EditorGUIUtility.PingObject(rootTransform.gameObject);
+            Debug.Log("Repaired EndGamePanelController on EndGamePanelsRoot in the current scene.", rootTransform.gameObject);
+        }
+
+        [MenuItem("Brain Eaters/UI/Repair End Game Panels Prefab")]
+        public static void RepairEndGamePanelsPrefab()
+        {
+            const string prefabPath = "Assets/BrainEaters/Prefabs/UI/EndGamePanelsRoot.prefab";
+            GameObject prefabRoot = PrefabUtility.LoadPrefabContents(prefabPath);
+            try
+            {
+                EndGamePanelController controller = EnsureControllerOnRoot(prefabRoot);
+                AssignControllerReferencesFromHierarchy(controller, null);
+                PrefabUtility.SaveAsPrefabAsset(prefabRoot, prefabPath);
+                Debug.Log($"Repaired EndGamePanelController references in {prefabPath}.", prefabRoot);
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(prefabRoot);
+            }
+        }
+
+        private static EndGamePanelController EnsureControllerOnRoot(GameObject overlayRoot)
+        {
+            EndGamePanelController controller = overlayRoot.GetComponent<EndGamePanelController>();
+            if (controller == null)
+            {
+                controller = Undo.AddComponent<EndGamePanelController>(overlayRoot);
+            }
+
+            return controller;
+        }
+
+        private static void AssignControllerReferencesFromHierarchy(EndGamePanelController controller, GameManager gameManager)
+        {
+            Transform root = controller.transform;
+            GameObject winPanel = root.Find("WinPanel")?.gameObject;
+            GameObject losePanel = root.Find("LosePanel")?.gameObject;
+
+            AssignControllerReferences(
+                controller,
+                winPanel,
+                losePanel,
+                FindChildComponent<TMP_Text>(winPanel, "TitleText"),
+                FindChildComponent<TMP_Text>(winPanel, "ReportText"),
+                FindChildComponent<TMP_Text>(losePanel, "TitleText"),
+                FindChildComponent<TMP_Text>(losePanel, "ReportText"),
+                FindChildComponent<Button>(winPanel, "RetryButton"),
+                FindChildComponent<Button>(losePanel, "RetryButton"),
+                FindChildComponent<Button>(winPanel, "BackToMenuButton"),
+                FindChildComponent<Button>(losePanel, "BackToMenuButton"),
+                gameManager);
+        }
+
+        private static void AssignControllerReferences(
+            EndGamePanelController controller,
+            GameObject winPanel,
+            GameObject losePanel,
+            TMP_Text winTitle,
+            TMP_Text winReport,
+            TMP_Text loseTitle,
+            TMP_Text loseReport,
+            Button winRetryButton,
+            Button loseRetryButton,
+            Button winBackButton,
+            Button loseBackButton,
+            GameManager gameManager)
+        {
             SerializedObject serializedObject = new SerializedObject(controller);
+            serializedObject.FindProperty("gameManager").objectReferenceValue = gameManager;
             serializedObject.FindProperty("winPanel").objectReferenceValue = winPanel;
             serializedObject.FindProperty("losePanel").objectReferenceValue = losePanel;
             serializedObject.FindProperty("winTitleText").objectReferenceValue = winTitle;
@@ -59,12 +170,30 @@ namespace BrainEaters.EditorTools
             serializedObject.FindProperty("loseBackToMenuButton").objectReferenceValue = loseBackButton;
             serializedObject.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(controller);
+        }
 
-            winPanel.SetActive(false);
-            losePanel.SetActive(false);
+        private static T FindChildComponent<T>(GameObject parent, string childName) where T : Component
+        {
+            if (parent == null)
+            {
+                return null;
+            }
 
-            Selection.activeGameObject = overlayRoot;
-            EditorGUIUtility.PingObject(overlayRoot);
+            return parent.transform.Find(childName)?.GetComponent<T>();
+        }
+
+        private static void RemoveMisplacedControllers(GameObject canvasObject, GameObject overlayRoot)
+        {
+            EndGamePanelController[] controllers = canvasObject.GetComponentsInChildren<EndGamePanelController>(true);
+            foreach (EndGamePanelController controller in controllers)
+            {
+                if (controller.gameObject == overlayRoot)
+                {
+                    continue;
+                }
+
+                Undo.DestroyObjectImmediate(controller);
+            }
         }
 
         private static GameObject CreateOrUpdatePanel(Transform parent, string objectName, Color backgroundColor)

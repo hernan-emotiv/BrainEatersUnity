@@ -14,6 +14,7 @@ namespace BrainEaters.GameFlow
         public event System.Action<GameplayReport> GameplayFinished;
         public event System.Action<GameModeType> ObjectiveModeChanged;
         public event System.Action<GameModeType, int, int> ObjectiveProgressChanged;
+        public event System.Action<IReadOnlyList<GameplayKillStat>> KillStatsChanged;
 
         [SerializeField] private LevelConfig levelConfig;
         [SerializeField] private PlayerController playerController;
@@ -191,6 +192,7 @@ namespace BrainEaters.GameFlow
             ConfigureLevelObjectives();
             NotifyObjectiveModeChanged();
             NotifyObjectiveProgressChanged();
+            NotifyKillStatsChanged();
             levelRunning = true;
             SetState(GameplayState.Running);
 
@@ -502,6 +504,11 @@ namespace BrainEaters.GameFlow
             }
         }
 
+        private void NotifyKillStatsChanged()
+        {
+            KillStatsChanged?.Invoke(BuildKillStats());
+        }
+
         private void ResetKillTracking()
         {
             enemyKillCounts.Clear();
@@ -568,6 +575,7 @@ namespace BrainEaters.GameFlow
             }
 
             enemyKillCounts[enemyType]++;
+            NotifyKillStatsChanged();
         }
 
         private void HandleCaptureZoneCaptured(CaptureZone _)

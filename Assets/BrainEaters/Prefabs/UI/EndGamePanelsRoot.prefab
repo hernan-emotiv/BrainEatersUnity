@@ -1016,6 +1016,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7085243150461779126}
   - component: {fileID: 2234021988528393272}
+  - component: {fileID: 6403594512349870001}
   m_Layer: 0
   m_Name: EndGamePanelsRoot
   m_TagString: Untagged
@@ -1052,6 +1053,29 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4917403160640543749}
   m_CullTransparentMesh: 1
+--- !u!114 &6403594512349870001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4917403160640543749}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6403bee5949bf4e73b750c36a9902873, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  gameManager: {fileID: 0}
+  winPanel: {fileID: 8805233230311556484}
+  losePanel: {fileID: 2553901012791901650}
+  winTitleText: {fileID: 771514170115009901}
+  winReportText: {fileID: 7398153327494809110}
+  loseTitleText: {fileID: 322494001808903973}
+  loseReportText: {fileID: 434371176662809514}
+  winRetryButton: {fileID: 6953522022975130837}
+  loseRetryButton: {fileID: 7919609772573113202}
+  winBackToMenuButton: {fileID: 1647953886624795745}
+  loseBackToMenuButton: {fileID: 7912691031477005636}
 --- !u!1 &5673988842847452308
 GameObject:
   m_ObjectHideFlags: 0

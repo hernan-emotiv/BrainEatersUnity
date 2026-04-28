@@ -224,6 +224,41 @@ namespace BrainEaters.UI
             {
                 gameManager = FindFirstObjectByType<GameManager>();
             }
+
+            winPanel ??= transform.Find("WinPanel")?.gameObject;
+            losePanel ??= transform.Find("LosePanel")?.gameObject;
+
+            ResolvePanelReferences(
+                winPanel,
+                ref winTitleText,
+                ref winReportText,
+                ref winRetryButton,
+                ref winBackToMenuButton);
+            ResolvePanelReferences(
+                losePanel,
+                ref loseTitleText,
+                ref loseReportText,
+                ref loseRetryButton,
+                ref loseBackToMenuButton);
+        }
+
+        private static void ResolvePanelReferences(
+            GameObject panel,
+            ref TMP_Text titleText,
+            ref TMP_Text reportText,
+            ref Button retryButton,
+            ref Button backToMenuButton)
+        {
+            if (panel == null)
+            {
+                return;
+            }
+
+            Transform panelTransform = panel.transform;
+            titleText ??= panelTransform.Find("TitleText")?.GetComponent<TMP_Text>();
+            reportText ??= panelTransform.Find("ReportText")?.GetComponent<TMP_Text>();
+            retryButton ??= panelTransform.Find("RetryButton")?.GetComponent<Button>();
+            backToMenuButton ??= panelTransform.Find("BackToMenuButton")?.GetComponent<Button>();
         }
 
         private static string FormatTime(float timeSeconds)
