@@ -1,0 +1,66 @@
+
+
+-- Avoidance tuning
+local AVOIDANCE_ANGLE = 30
+local AVOIDANCE_DURATION = 1.0 -- seconds to sidestep
+local AVOIDANCE_CHECK_INTERVAL = 0.1
+
+
+local function avoidanceSidestep()
+if not Root or not targetHRP then return end
+local origin = Root.Position
+local toTarget = (targetHRP.Position - origin).Unit
+local baseCF = CFrame.new(Vector3.new(), toTarget)
+local leftVec = (baseCF * CFrame.Angles(0, math.rad(AVOIDANCE_ANGLE), 0)).LookVector
+local rightVec = (baseCF * CFrame.Angles(0, -math.rad(AVOIDANCE_ANGLE), 0)).LookVector
+
+
+local rayDist = 6
+local rayParams = RaycastParams.new()
+rayParams.FilterType = Enum.RaycastFilterType.Exclude
+rayParams.FilterDescendantsInstances = { NPC }
+rayParams.IgnoreWater = true
+
+
+local leftClear = not Workspace:Raycast(origin, leftVec * rayDist, rayParams)
+local rightClear = not Workspace:Raycast(origin, rightVec * rayDist, rayParams)
+
+
+local chosenVec = nil
+if leftClear and rightClear then
+chosenVec = math.random() < 0.5 and leftVec or rightVec
+elseif leftClear then
+chosenVec = leftVec
+elseif rightClear then
+chosenVec = rightVec
+else
+return -- no clear direction
+end
+
+
+-- Face that direction
+Root.CFrame = CFrame.new(origin, origin + chosenVec)
+if walkTrack and not walkTrack.IsPlaying then walkTrack:Play(0.1) end
+walkTrack:AdjustWeight(1, 0.2)
+
+
+-- Sidestep using velocity
+local bv = Instance.new("BodyVelocity")
+bv.MaxForce = Vector3.new(1e5, 0, 1e5)
+bv.Velocity = chosenVec * SPEED
+bv.Parent = Root
+
+
+local elapsed = 0
+while elapsed < AVOIDANCE_DURATION do
+if not targetHRP then break end
+local direct = (targetHRP.Position - Root.Position).Unit
+local hit = Workspace:Raycast(Root.Position, direct * rayDist, rayParams)
+if not hit then break end
+task.wait(AVOIDANCE_CHECK_INTERVAL)
+elapsed += AVOIDANCE_CHECK_INTERVAL
+end
+
+
+bv:Destroy()
+end

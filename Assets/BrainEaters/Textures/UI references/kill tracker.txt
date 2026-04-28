@@ -1,0 +1,124 @@
+-- KillTracker.server.lua
+-- Standalone tracker: counts per-type and total NPC kills.
+-- Publishes attributes on Workspace.NPCs for UI consumption: Kills_<type>, TotalKills
+-- Works independently of the spawner.
+
+local Workspace  = game:GetService("Workspace")
+
+-- === Configure the canonical type keys you use everywhere (no spaces) ===
+local TYPES = {
+	"frank_master",
+	"zombie_master",
+	"wolf_master",
+}
+
+-- === Where NPCs live ===
+local NPCS_FOLDER = Workspace:WaitForChild("NPCs")
+
+-- === Internal state ===
+local perTypeKills: {[string]: number} = {}
+local counted = setmetatable({}, { __mode = "k" })  -- weak keys: Model -> true (prevents double count)
+local TOTAL_KILLS = 0
+
+-- Init attributes & local table
+local function initAttributes()
+	NPCS_FOLDER:SetAttribute("TotalKills", TOTAL_KILLS)
+	for _, key in ipairs(TYPES) do
+		perTypeKills[key] = perTypeKills[key] or 0
+		NPCS_FOLDER:SetAttribute("Kills_"..key, perTypeKills[key])
+	end
+end
+initAttributes()
+
+local function incKill(typeKey: string)
+	if not typeKey then return end
+	perTypeKills[typeKey] = (perTypeKills[typeKey] or 0) + 1
+	TOTAL_KILLS += 1
+	NPCS_FOLDER:SetAttribute("Kills_"..typeKey, perTypeKills[typeKey])
+	NPCS_FOLDER:SetAttribute("TotalKills", TOTAL_KILLS)
+end
+
+-- === Resolve a model's type ===
+-- Priority: model:GetAttribute("TypeName") -> name contains a known key -> nil (unknown)
+local function resolveType(model: Model): string?
+	-- explicit attribute wins if present
+	local attr = model:GetAttribute("TypeName")
+	if typeof(attr) == "string" and attr ~= "" then
+		return attr
+	end
+	-- otherwise try to match by name (case-insensitive substring)
+	local lower = string.lower(model.Name)
+	for _, key in ipairs(TYPES) do
+		if string.find(lower, string.lower(key), 1, true) then
+			return key
+		end
+	end
+	return nil
+end
+
+-- === Count a model exactly once, no matter which signal fired ===
+local function markDead(model: Model, reason: string?)
+	if counted[model] then return end -- already counted via another signal
+	counted[model] = true
+
+	local typeKey = resolveType(model) or "unknown"
+	incKill(typeKey)
+	-- Optional: expose last reason/type for debugging (safe attributes)
+	NPCS_FOLDER:SetAttribute("LastKillType", typeKey)
+	NPCS_FOLDER:SetAttribute("LastKillReason", reason or "unknown")
+end
+
+-- === Wire all possible death signals on a model ===
+local function wireModel(model: Model)
+	-- Only wire models (skip anything else under NPCs)
+	if not model:IsA("Model") then return end
+
+	-- Prevent re-wiring if something re-parents
+	if model:GetAttribute("__KillTrackerWired") then return end
+	model:SetAttribute("__KillTrackerWired", true)
+
+	-- Primary events emitted by your NPC script
+	local npcDied = model:FindFirstChild("NPCDied")
+	if npcDied and npcDied:IsA("BindableEvent") then
+		npcDied.Event:Connect(function()
+			markDead(model, "NPCDied")
+		end)
+	end
+
+	local ncpDied = model:FindFirstChild("NCPDied")
+	if ncpDied and ncpDied:IsA("BindableEvent") then
+		ncpDied.Event:Connect(function()
+			markDead(model, "NCPDied")
+		end)
+	end
+
+	-- Attribute path (your NPC script sets IsDead=true before destroying)
+	model:GetAttributeChangedSignal("IsDead"):Connect(function()
+		if model:GetAttribute("IsDead") then
+			markDead(model, "IsDeadAttribute")
+		end
+	end)
+
+	-- Humanoid fallback (some templates may have one)
+	local hum = model:FindFirstChildOfClass("Humanoid")
+	if hum then
+		hum.Died:Connect(function()
+			markDead(model, "Humanoid.Died")
+		end)
+	end
+
+	-- Last resort: the model is being destroyed without any signals
+	model.Destroying:Connect(function()
+		markDead(model, "Model.Destroying")
+	end)
+end
+
+-- === Wire all existing NPCs on startup ===
+for _, child in ipairs(NPCS_FOLDER:GetChildren()) do
+	wireModel(child)
+end
+
+-- === Wire new NPCs as they are added ===
+NPCS_FOLDER.ChildAdded:Connect(function(child)
+	wireModel(child)
+end)

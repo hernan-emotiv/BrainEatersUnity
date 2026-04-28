@@ -1,0 +1,232 @@
+-- KillHUD.client.lua — Bottom-center 3-counter HUD + debug
+-- Place as a LocalScript in StarterPlayerScripts or StarterGui
+
+local Players   = game:GetService("Players")
+local RunService= game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+local LP        = Players.LocalPlayer
+
+local DEBUG = true  -- set false to silence prints once it's working
+
+local function dprint(...)
+	if DEBUG then print("[KillHUD]", ...) end
+end
+
+-- ==== CONFIG: the canonical type keys (no spaces) ====
+local TYPES = {
+	{ key = "frank_master",  label = "Frank"  },
+	{ key = "zombie_master", label = "Zombie" },
+	{ key = "wolf_master",   label = "Wolf"   },
+}
+
+-- ==== Find source of truth (Workspace.NPCs) ====
+local NPCS_FOLDER = Workspace:FindFirstChild("NPCs")
+if not NPCS_FOLDER then
+	dprint("Workspace.NPCs not found immediately; waiting…")
+	NPCS_FOLDER = Workspace:WaitForChild("NPCs", 10)
+	if not NPCS_FOLDER then
+		warn("[KillHUD] Workspace.NPCs not found after 10s. HUD will retry in background.")
+		-- Background poll until it exists, then build UI
+		task.spawn(function()
+			repeat
+				task.wait(1)
+				NPCS_FOLDER = Workspace:FindFirstChild("NPCs")
+			until NPCS_FOLDER
+			dprint("NPCs found (late). Building HUD now.")
+			-- Slight delay to allow attributes to be set by server tracker
+			task.wait(0.1)
+			safeBuild()
+		end)
+	else
+		dprint("NPCs found. Building HUD now.")
+	end
+else
+	dprint("NPCs found immediately.")
+end
+
+-- We’ll define UI refs in outer scope so late-build works
+local screenGui, valueRefs = nil, {}
+
+-- Build the HUD and wire attribute listeners
+local function buildHUD()
+	-- guard against double build
+	if screenGui then return end
+
+	local pg = LP:WaitForChild("PlayerGui")
+	screenGui = Instance.new("ScreenGui")
+	screenGui.Name = "KillCountersHUD"
+	screenGui.ResetOnSpawn = false
+	screenGui.IgnoreGuiInset = true
+	screenGui.DisplayOrder = 1000
+	screenGui.Parent = pg
+
+	-- Holder (bottom center)
+	local holder = Instance.new("Frame")
+	holder.Name = "Holder"
+	holder.AnchorPoint = Vector2.new(0.5, 1)
+	holder.Position = UDim2.new(0.5, 0, 1, -24)
+	holder.Size = UDim2.new(0, 420, 0, 60)
+	holder.BackgroundTransparency = 1
+	holder.Parent = screenGui
+
+	-- Background pill
+	local bg = Instance.new("Frame")
+	bg.Name = "BG"
+	bg.AnchorPoint = Vector2.new(0.5, 0.5)
+	bg.Position = UDim2.new(0.5, 0, 0.5, 0)
+	bg.Size = UDim2.new(1, 0, 1, 0)
+	bg.BackgroundColor3 = Color3.fromRGB(20, 20, 24)
+	bg.BackgroundTransparency = 0.25
+	bg.Parent = holder
+
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 18)
+	corner.Parent = bg
+
+	local stroke = Instance.new("UIStroke")
+	stroke.Thickness = 1
+	stroke.Transparency = 0.5
+	stroke.Color = Color3.fromRGB(255, 255, 255)
+	stroke.Parent = bg
+
+	local layout = Instance.new("UIListLayout")
+	layout.FillDirection = Enum.FillDirection.Horizontal
+	layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	layout.VerticalAlignment = Enum.VerticalAlignment.Center
+	layout.Padding = UDim.new(0, 18)
+	layout.Parent = bg
+
+	-- card factory
+	local function makeCard(labelText)
+		local card = Instance.new("Frame")
+		card.Name = labelText .. "_Card"
+		card.Size = UDim2.new(0, 110, 0, 44)
+		card.BackgroundColor3 = Color3.fromRGB(28, 28, 34)
+		card.BackgroundTransparency = 0.15
+
+		local c = Instance.new("UICorner")
+		c.CornerRadius = UDim.new(0, 12)
+		c.Parent = card
+
+		local inner = Instance.new("Frame")
+		inner.Name = "Inner"
+		inner.AnchorPoint = Vector2.new(0.5, 0.5)
+		inner.Position = UDim2.new(0.5, 0, 0.5, 0)
+		inner.Size = UDim2.new(1, -8, 1, -8)
+		inner.BackgroundTransparency = 1
+		inner.Parent = card
+
+		local vLayout = Instance.new("UIListLayout")
+		vLayout.FillDirection = Enum.FillDirection.Vertical
+		vLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+		vLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+		vLayout.Padding = UDim.new(0, 2)
+		vLayout.Parent = inner
+
+		local label = Instance.new("TextLabel")
+		label.Name = "Label"
+		label.Size = UDim2.new(1, 0, 0, 16)
+		label.BackgroundTransparency = 1
+		label.Text = labelText
+		label.Font = Enum.Font.GothamSemibold
+		label.TextSize = 14
+		label.TextColor3 = Color3.fromRGB(210, 210, 220)
+		label.Parent = inner
+
+		local value = Instance.new("TextLabel")
+		value.Name = "Value"
+		value.Size = UDim2.new(1, 0, 0, 20)
+		value.BackgroundTransparency = 1
+		value.Text = "0"
+		value.Font = Enum.Font.GothamBlack
+		value.TextSize = 20
+		value.TextColor3 = Color3.fromRGB(255, 255, 255)
+		value.Parent = inner
+
+		return card, value
+	end
+
+	valueRefs = {}
+	for _, t in ipairs(TYPES) do
+		local card, valueLabel = makeCard(t.label)
+		card.Parent = bg
+		valueRefs[t.key] = valueLabel
+	end
+
+	-- Small debug badge (top-left) so we know script is running
+	if DEBUG then
+		local dbg = Instance.new("TextLabel")
+		dbg.Name = "DebugBadge"
+		dbg.AnchorPoint = Vector2.new(0,0)
+		dbg.Position = UDim2.new(0, 12, 0, 12)
+		dbg.Size = UDim2.new(0, 260, 0, 22)
+		dbg.BackgroundTransparency = 0.2
+		dbg.BackgroundColor3 = Color3.fromRGB(30,30,36)
+		dbg.Text = "KillHUD: running, waiting for attributes…"
+		dbg.TextXAlignment = Enum.TextXAlignment.Left
+		dbg.Font = Enum.Font.Code
+		dbg.TextSize = 14
+		dbg.TextColor3 = Color3.fromRGB(255,255,255)
+		dbg.Parent = screenGui
+	end
+end
+
+-- Wire attribute listeners (after HUD exists and NPCS_FOLDER resolved)
+local function wireAttributes()
+	if not NPCS_FOLDER then return end
+	if not screenGui then return end
+
+	-- init & subscribe for each type
+	for _, t in ipairs(TYPES) do
+		local attr = "Kills_" .. t.key
+		local val = NPCS_FOLDER:GetAttribute(attr)
+		if val == nil then
+			dprint(("Attribute %s missing initially; defaulting to 0"):format(attr))
+			val = 0
+		end
+		if valueRefs[t.key] then
+			valueRefs[t.key].Text = tostring(val)
+		end
+
+		NPCS_FOLDER:GetAttributeChangedSignal(attr):Connect(function()
+			local n = NPCS_FOLDER:GetAttribute(attr) or 0
+			if valueRefs[t.key] then
+				valueRefs[t.key].Text = tostring(n)
+				-- little punch animation
+				pcall(function()
+					valueRefs[t.key]:TweenSize(UDim2.new(1,0,0,24), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.08, true)
+					task.delay(0.1, function()
+						valueRefs[t.key]:TweenSize(UDim2.new(1,0,0,20), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.08, true)
+					end)
+				end)
+			end
+			dprint(("Updated %s → %d"):format(attr, n))
+			local dbg = screenGui and screenGui:FindFirstChild("DebugBadge")
+			if dbg then
+				dbg.Text = ("KillHUD OK | %s=%d"):format(attr, n)
+			end
+		end)
+	end
+
+	-- also log TotalKills changes (optional)
+	if DEBUG then
+		NPCS_FOLDER:GetAttributeChangedSignal("TotalKills"):Connect(function()
+			dprint("TotalKills =", NPCS_FOLDER:GetAttribute("TotalKills"))
+		end)
+	end
+end
+
+-- Safe build once everything is available
+function safeBuild()
+	if not screenGui then buildHUD() end
+	if NPCS_FOLDER then wireAttributes() end
+end
+
+-- Initial attempt
+if NPCS_FOLDER then
+	buildHUD()
+	-- slight delay to let server set initial attributes
+	task.delay(0.1, wireAttributes)
+end
+
+

@@ -82,6 +82,21 @@ namespace BrainEaters.GameFlow
             return state != LevelAvailabilityState.Locked;
         }
 
+        public static bool IsFirstLevelCompleted(CampaignConfig campaign)
+        {
+            if (campaign == null || campaign.Levels.Count == 0 || campaign.Levels[0] == null)
+            {
+                return false;
+            }
+
+            return IsLevelCompleted(campaign.Levels[0]);
+        }
+
+        public static bool IsLevelCompleted(LevelConfig levelConfig)
+        {
+            return PlayerPrefs.GetInt(GetCompletedKey(levelConfig), 0) == 1;
+        }
+
         public static LevelAvailabilityState GetState(CampaignConfig campaign, LevelConfig levelConfig)
         {
             if (campaign == null || levelConfig == null)
@@ -120,11 +135,6 @@ namespace BrainEaters.GameFlow
             }
 
             return -1;
-        }
-
-        private static bool IsLevelCompleted(LevelConfig levelConfig)
-        {
-            return PlayerPrefs.GetInt(GetCompletedKey(levelConfig), 0) == 1;
         }
 
         private static void SetLevelCompleted(LevelConfig levelConfig, bool completed)

@@ -1,0 +1,80 @@
+-- Example: Expanding neon ring using Beams and Attachments
+
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+
+-- Parameters
+local centerPos = Vector3.new(0, 5, 0)       -- center of ring (e.g. waist height)
+local initialRadius = 2                     -- starting radius of the ring
+local finalRadius = 10                      -- final radius to expand to
+local expandTime = 2                        -- seconds for full expansion
+local beamThickness = 0.2                   -- thickness of the ring outline
+
+-- Create an invisible center Part to hold attachments
+local centerPart = Instance.new("Part")
+centerPart.Name = "RingCenter"
+centerPart.Anchored = true
+centerPart.Transparency = 1
+centerPart.CanCollide = false
+centerPart.CFrame = CFrame.new(centerPos)
+centerPart.Parent = Workspace
+
+-- Create two Attachments on opposite sides of the part
+local leftAtt = Instance.new("Attachment", centerPart)
+leftAtt.Name = "LeftAttachment"
+leftAtt.Position = Vector3.new(initialRadius, 0, 0)
+leftAtt.Orientation = Vector3.new(0, 0, 0)  -- +X axis
+
+local rightAtt = Instance.new("Attachment", centerPart)
+rightAtt.Name = "RightAttachment"
+rightAtt.Position = Vector3.new(-initialRadius, 0, 0)
+rightAtt.Orientation = Vector3.new(0, 180, 0)  -- -X axis
+
+-- Function to create a Beam with given curve direction
+local beamColor = Color3.new(0, 1, 0) -- neon green
+local function makeBeam(curve)
+    local beam = Instance.new("Beam", centerPart)
+    beam.Attachment0 = leftAtt
+    beam.Attachment1 = rightAtt
+    beam.FaceCamera = true
+    beam.Width0 = beamThickness
+    beam.Width1 = beamThickness
+    beam.Color = ColorSequence.new(beamColor)
+    beam.Transparency = NumberSequence.new(0)  -- start fully opaque
+    beam.CurveSize0 = curve
+    beam.CurveSize1 = curve
+    return beam
+end
+
+-- Create two beams with opposite curvature to form a circle
+local diameter = 2 * initialRadius
+local curveFactor = 0.6875  -- magic number for circle (approx)
+local beam1 = makeBeam(diameter * curveFactor)
+local beam2 = makeBeam(-diameter * curveFactor)
+
+-- Animate the ring expanding and fading out
+local elapsed = 0
+local conn
+conn = RunService.RenderStepped:Connect(function(dt)
+    elapsed = elapsed + dt
+    local t = math.clamp(elapsed / expandTime, 0, 1)
+    -- Interpolate the radius
+    local radius = initialRadius + (finalRadius - initialRadius) * t
+    leftAtt.Position = Vector3.new(radius, 0, 0)
+    rightAtt.Position = Vector3.new(-radius, 0, 0)
+    -- Update beam curvature for new radius
+    local diam = radius * 2
+    beam1.CurveSize0 = diam * curveFactor
+    beam1.CurveSize1 = diam * curveFactor
+    beam2.CurveSize0 = -diam * curveFactor
+    beam2.CurveSize1 = -diam * curveFactor
+    -- Fade out over time
+    local alpha = t  -- 0 -> 1
+    beam1.Transparency = NumberSequence.new(alpha)
+    beam2.Transparency = NumberSequence.new(alpha)
+    -- Cleanup when done
+    if t >= 1 then
+        conn:Disconnect()
+        centerPart:Destroy()
+    end
+end)

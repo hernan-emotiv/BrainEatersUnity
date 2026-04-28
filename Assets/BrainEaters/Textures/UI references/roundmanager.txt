@@ -1,0 +1,125 @@
+-- RoundManager.server.lua — 5-minute round + GameOver + Restart support
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace         = game:GetService("Workspace")
+local Players           = game:GetService("Players")
+
+-- ===== CONFIG =====
+local ROUND_SECONDS = 60      -- 5 minutes
+local RESTART_COOLDOWN = 2     -- seconds to debounce restart clicks
+
+-- ===== EVENTS =====
+local GameOver = ReplicatedStorage:FindFirstChild("GameOver")
+if not GameOver then
+	GameOver = Instance.new("RemoteEvent")
+	GameOver.Name = "GameOver"
+	GameOver.Parent = ReplicatedStorage
+end
+
+local RequestRestart = ReplicatedStorage:FindFirstChild("RequestRestart")
+if not RequestRestart then
+	RequestRestart = Instance.new("RemoteEvent")
+	RequestRestart.Name = "RequestRestart"
+	RequestRestart.Parent = ReplicatedStorage
+end
+
+-- ===== STATE ATTRIBUTES (clients read these) =====
+Workspace:SetAttribute("RoundActive", false)
+Workspace:SetAttribute("RoundTimeLeft", 0)
+Workspace:SetAttribute("AllowSpawns", true)   -- spawner should obey this
+Workspace:SetAttribute("BombEnabled",  true)  -- bomb input should obey this
+
+-- Kills live under Workspace.NPCs
+local NPCS = Workspace:FindFirstChild("NPCs") or Instance.new("Folder", Workspace)
+NPCS.Name  = "NPCs"
+local TYPES = { "frank_master", "zombie_master", "wolf_master" }
+
+local function resetKills()
+	NPCS:SetAttribute("TotalKills", 0)
+	for _, k in ipairs(TYPES) do
+		NPCS:SetAttribute("Kills_"..k, 0)
+	end
+end
+
+local function snapshotStats()
+	local total = NPCS:GetAttribute("TotalKills") or 0
+	local per = {}
+	for _, k in ipairs(TYPES) do
+		per[k] = NPCS:GetAttribute("Kills_"..k) or 0
+	end
+	return total, per
+end
+
+-- Hard wipe all current NPCs so the spawner can refill from zero
+local function wipeAllNPCs()
+	for _, child in ipairs(NPCS:GetChildren()) do
+		if child:IsA("Model") then
+			child:Destroy()
+		end
+	end
+end
+
+-- Optional: clear any leftover VFX folders you might have made (adjust as needed)
+local function wipeTransientFX()
+	-- Example:
+	-- local fxFolder = Workspace:FindFirstChild("FX")
+	-- if fxFolder then fxFolder:ClearAllChildren() end
+end
+
+-- ===== ROUND LIFECYCLE =====
+local roundRunning = false
+local lastRestartAt = 0
+
+local function startRound()
+	if roundRunning then return end
+	roundRunning = true
+
+	-- Clean slate
+	wipeAllNPCs()
+	wipeTransientFX()
+	resetKills()
+
+	Workspace:SetAttribute("AllowSpawns", true)
+	Workspace:SetAttribute("BombEnabled",  true)
+	Workspace:SetAttribute("RoundActive",  true)
+	Workspace:SetAttribute("RoundTimeLeft", ROUND_SECONDS)
+
+	-- Countdown
+	for t = ROUND_SECONDS - 1, 0, -1 do
+		task.wait(1)
+		-- if someone forced a restart mid-countdown, stop this loop
+		if not roundRunning then return end
+		Workspace:SetAttribute("RoundTimeLeft", t)
+	end
+
+	-- End of round
+	Workspace:SetAttribute("RoundActive", false)
+	Workspace:SetAttribute("AllowSpawns", false)
+	Workspace:SetAttribute("BombEnabled",  false)
+
+	local total, per = snapshotStats()
+	GameOver:FireAllClients(total, per)
+
+	roundRunning = false
+end
+
+-- Client asks to restart (e.g., pressed Restart on Game Over)
+RequestRestart.OnServerEvent:Connect(function(player)
+	-- Basic guardrails:
+	if roundRunning then return end                           -- can't restart during an active round
+	if (os.clock() - lastRestartAt) < RESTART_COOLDOWN then return end
+	lastRestartAt = os.clock()
+
+	-- Optional: permissions (uncomment if you want only the first player to restart, etc.)
+	-- local allowed = true -- e.g., player == Players:GetPlayers()[1]
+	-- if not allowed then return end
+
+	-- Kick off a new round
+	task.spawn(startRound)
+end)
+
+-- Boot the first round when the server starts
+task.spawn(function()
+	task.wait(0.2) -- let other systems boot
+	startRound()
+end)
