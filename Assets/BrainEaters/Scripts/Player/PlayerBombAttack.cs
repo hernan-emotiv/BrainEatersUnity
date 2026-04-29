@@ -14,6 +14,7 @@ namespace BrainEaters.Player
         [SerializeField] private LayerMask hitMask = ~0;
 
         private readonly HashSet<IDamageable> processedTargets = new HashSet<IDamageable>();
+        private readonly HashSet<IBombActivatable> processedActivatables = new HashSet<IBombActivatable>();
         private float nextReadyTime;
 
         private void Awake()
@@ -48,6 +49,7 @@ namespace BrainEaters.Player
             }
 
             processedTargets.Clear();
+            processedActivatables.Clear();
 
             Collider[] hits = Physics.OverlapSphere(
                 attackOrigin.position,
@@ -56,11 +58,19 @@ namespace BrainEaters.Player
                 QueryTriggerInteraction.Collide);
 
             int hitCount = 0;
+            int activationCount = 0;
             foreach (Collider hit in hits)
             {
                 if (hit == null || hit.transform.root == transform.root)
                 {
                     continue;
+                }
+
+                IBombActivatable activatable = hit.GetComponentInParent<IBombActivatable>();
+                if (activatable != null && activatable.CanActivateBomb && processedActivatables.Add(activatable))
+                {
+                    activatable.ActivateBomb();
+                    activationCount++;
                 }
 
                 IDamageable damageable = hit.GetComponentInParent<IDamageable>();
@@ -79,7 +89,7 @@ namespace BrainEaters.Player
                 bombPulseVisual.Play(radius);
             }
 
-            Debug.Log($"Bomb triggered. Targets hit: {hitCount}.", this);
+            Debug.Log($"Bomb triggered. Targets hit: {hitCount}. Activatables triggered: {activationCount}.", this);
             return true;
         }
 
