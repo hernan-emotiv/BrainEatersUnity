@@ -1,0 +1,7 @@
+interface:
+  display_name: "Emotiv Cortex Architecture"
+  short_description: "Cortex-ready input architecture."
+  default_prompt: "Use $brain-eaters-cortex-architecture to design or refactor Emotiv input architecture so keyboard, mobile, simulator, and Cortex mental commands stay decoupled."
+
+policy:
+  allow_implicit_invocation: true
