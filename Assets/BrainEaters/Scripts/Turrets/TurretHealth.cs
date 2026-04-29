@@ -11,6 +11,7 @@ namespace BrainEaters.Turrets
         [SerializeField] private Transform targetPoint;
 
         public event Action<TurretHealth> Destroyed;
+        public event Action<float> Damaged;
 
         public float CurrentHealth { get; private set; }
         public bool IsDestroyed { get; private set; }
@@ -47,6 +48,7 @@ namespace BrainEaters.Turrets
             }
 
             CurrentHealth = Mathf.Max(0f, CurrentHealth - amount);
+            Damaged?.Invoke(amount);
             if (CurrentHealth <= 0f)
             {
                 IsDestroyed = true;

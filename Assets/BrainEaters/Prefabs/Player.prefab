@@ -296,7 +296,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 46c1fed9166a84ce5b4e5728d88ca114, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  enableMouseLook: 0
+  enableMouseLook: 1
   mouseLookSensitivity: 0.015
 --- !u!114 &5187834875856360923
 MonoBehaviour:

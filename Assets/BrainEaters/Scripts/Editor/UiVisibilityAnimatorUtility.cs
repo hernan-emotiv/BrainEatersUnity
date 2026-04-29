@@ -103,6 +103,9 @@ namespace BrainEaters.EditorTools
             serializedObject.FindProperty("useUnscaledTime").boolValue = true;
             serializedObject.FindProperty("deactivateWhenHidden").boolValue = true;
             serializedObject.FindProperty("blockRaycastsWhenVisible").boolValue = true;
+            serializedObject.FindProperty("playOnEnable").boolValue = false;
+            serializedObject.FindProperty("visibleOnEnable").boolValue = true;
+            serializedObject.FindProperty("initialDelay").floatValue = 0f;
             serializedObject.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(animator);
         }

@@ -52,12 +52,13 @@ namespace BrainEaters.Cameras
 
             ResolveReferences();
             InitializeOrbitIfNeeded();
-            UpdateOrbitAngles();
+            float deltaTime = Application.isPlaying ? Time.unscaledDeltaTime : Time.deltaTime;
+            UpdateOrbitAngles(deltaTime);
 
             Vector3 focusPoint = target.position + Vector3.up * targetLookHeight;
             Quaternion orbitRotation = Quaternion.Euler(pitch, yaw, 0f);
             Vector3 desiredPosition = focusPoint + orbitRotation * (Vector3.back * orbitDistance);
-            transform.position = Vector3.Lerp(transform.position, desiredPosition, 1f - Mathf.Exp(-followSpeed * Time.deltaTime));
+            transform.position = Vector3.Lerp(transform.position, desiredPosition, 1f - Mathf.Exp(-followSpeed * deltaTime));
 
             if (lookAtTarget)
             {
@@ -81,10 +82,10 @@ namespace BrainEaters.Cameras
             }
         }
 
-        private void UpdateOrbitAngles()
+        private void UpdateOrbitAngles(float deltaTime)
         {
             Vector2 lookInput = inputRouter != null ? inputRouter.Look : Vector2.zero;
-            float lookTimeFactor = inputRouter != null && inputRouter.UsesDeltaLookInput ? 1f : Time.deltaTime;
+            float lookTimeFactor = inputRouter != null && inputRouter.UsesDeltaLookInput ? 1f : deltaTime;
 
             if (controlMode == MobileControlMode.SingleJoystick)
             {
@@ -94,7 +95,7 @@ namespace BrainEaters.Cameras
                     target.rotation = Quaternion.Euler(0f, targetYaw, 0f);
                 }
 
-                yaw = Mathf.LerpAngle(yaw, target.eulerAngles.y, 1f - Mathf.Exp(-singleJoystickFollowSpeed * Time.deltaTime));
+                yaw = Mathf.LerpAngle(yaw, target.eulerAngles.y, 1f - Mathf.Exp(-singleJoystickFollowSpeed * deltaTime));
                 return;
             }
 

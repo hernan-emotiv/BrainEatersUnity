@@ -10,8 +10,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dd8db6cb68b2d46ca83fdd74825bca6c, type: 3}
-  m_Name: SpawnConfig_Level01
+  m_Name: SpawnConfig_Onboarding_Level
   m_EditorClassIdentifier: 
   initialDelaySeconds: 0.5
-  spawnIntervalSeconds: 0.85
-  maxAliveEnemies: 18
+  spawnIntervalSeconds: 0.35
+  maxAliveEnemies: 50
