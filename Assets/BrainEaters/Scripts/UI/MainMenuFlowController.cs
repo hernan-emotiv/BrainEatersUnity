@@ -34,10 +34,10 @@ namespace BrainEaters.UI
 
         public void ShowMainMenu()
         {
-            SetActive(mainMenuRoot, true);
-            SetActive(levelSelectRoot, false);
-            SetActive(tutorialPopupRoot, false);
-            SetActive(howToPlayPopupRoot, false);
+            SetVisible(mainMenuRoot, true, true);
+            SetVisible(levelSelectRoot, false, true);
+            SetVisible(tutorialPopupRoot, false);
+            SetVisible(howToPlayPopupRoot, false);
         }
 
         public void HandlePlayPressed()
@@ -59,26 +59,26 @@ namespace BrainEaters.UI
 
         public void ShowLevelSelect()
         {
-            SetActive(mainMenuRoot, false);
-            SetActive(levelSelectRoot, true);
-            SetActive(tutorialPopupRoot, false);
-            SetActive(howToPlayPopupRoot, false);
+            SetVisible(mainMenuRoot, false, true);
+            SetVisible(levelSelectRoot, true, true);
+            SetVisible(tutorialPopupRoot, false);
+            SetVisible(howToPlayPopupRoot, false);
         }
 
         public void ShowTutorial()
         {
-            SetActive(mainMenuRoot, true);
-            SetActive(levelSelectRoot, false);
-            SetActive(tutorialPopupRoot, true);
-            SetActive(howToPlayPopupRoot, false);
+            SetVisible(mainMenuRoot, true, true);
+            SetVisible(levelSelectRoot, false, true);
+            SetVisible(tutorialPopupRoot, true);
+            SetVisible(howToPlayPopupRoot, false);
         }
 
         public void ShowHowToPlay()
         {
-            SetActive(mainMenuRoot, true);
-            SetActive(levelSelectRoot, false);
-            SetActive(tutorialPopupRoot, false);
-            SetActive(howToPlayPopupRoot, true);
+            SetVisible(mainMenuRoot, true, true);
+            SetVisible(levelSelectRoot, false, true);
+            SetVisible(tutorialPopupRoot, false);
+            SetVisible(howToPlayPopupRoot, true);
         }
 
         public void StartFromTutorial()
@@ -124,12 +124,21 @@ namespace BrainEaters.UI
             button.onClick.AddListener(callback);
         }
 
-        private static void SetActive(GameObject target, bool active)
+        private static void SetVisible(GameObject target, bool visible, bool instant = false)
         {
-            if (target != null)
+            if (target == null)
             {
-                target.SetActive(active);
+                return;
             }
+
+            UiVisibilityAnimator animator = target.GetComponent<UiVisibilityAnimator>();
+            if (animator != null)
+            {
+                animator.SetVisible(visible, instant);
+                return;
+            }
+
+            target.SetActive(visible);
         }
 
         private static bool HasSeenTutorial()

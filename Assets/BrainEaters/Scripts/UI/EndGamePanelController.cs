@@ -23,7 +23,7 @@ namespace BrainEaters.UI
         private void Awake()
         {
             ResolveReferences();
-            SetPanelsVisible(false, false);
+            SetPanelsVisible(false, false, true);
             BindButtons();
             Debug.Log($"EndGamePanelController Awake. GameManager assigned: {gameManager != null}.", this);
         }
@@ -127,7 +127,7 @@ namespace BrainEaters.UI
         {
             if (gameplayState == GameplayState.Initializing || gameplayState == GameplayState.Running)
             {
-                SetPanelsVisible(false, false);
+                SetPanelsVisible(false, false, true);
             }
         }
 
@@ -205,17 +205,27 @@ namespace BrainEaters.UI
             }
         }
 
-        private void SetPanelsVisible(bool showWin, bool showLose)
+        private void SetPanelsVisible(bool showWin, bool showLose, bool instant = false)
         {
-            if (winPanel != null)
+            SetPanelVisible(winPanel, showWin, instant);
+            SetPanelVisible(losePanel, showLose, instant);
+        }
+
+        private static void SetPanelVisible(GameObject panel, bool visible, bool instant)
+        {
+            if (panel == null)
             {
-                winPanel.SetActive(showWin);
+                return;
             }
 
-            if (losePanel != null)
+            UiVisibilityAnimator animator = panel.GetComponent<UiVisibilityAnimator>();
+            if (animator != null)
             {
-                losePanel.SetActive(showLose);
+                animator.SetVisible(visible, instant);
+                return;
             }
+
+            panel.SetActive(visible);
         }
 
         private void ResolveReferences()

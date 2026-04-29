@@ -31,12 +31,14 @@ namespace BrainEaters.EditorTools
             StretchFullScreen(overlayRect);
 
             GameObject winPanel = CreateOrUpdatePanel(overlayRoot.transform, "WinPanel", new Color(0.08f, 0.2f, 0.12f, 0.88f));
+            UiVisibilityAnimatorUtility.EnsureVisibilityAnimator(winPanel);
             TMP_Text winTitle = CreateOrUpdateLabel(winPanel.transform, "TitleText", "YOU SURVIVED", 42f, new Vector2(0f, -80f), new Vector2(700f, 60f));
             TMP_Text winReport = CreateOrUpdateLabel(winPanel.transform, "ReportText", "Total Enemies Eliminated: 0", 28f, new Vector2(0f, -170f), new Vector2(700f, 260f));
             Button winRetryButton = CreateOrUpdateButton(winPanel.transform, "RetryButton", "Retry", new Vector2(-120f, -470f), new Vector2(220f, 56f));
             Button winBackButton = CreateOrUpdateButton(winPanel.transform, "BackToMenuButton", "Back to Menu", new Vector2(120f, -470f), new Vector2(220f, 56f));
 
             GameObject losePanel = CreateOrUpdatePanel(overlayRoot.transform, "LosePanel", new Color(0.2f, 0.08f, 0.08f, 0.9f));
+            UiVisibilityAnimatorUtility.EnsureVisibilityAnimator(losePanel);
             TMP_Text loseTitle = CreateOrUpdateLabel(losePanel.transform, "TitleText", "YOU WERE OVERWHELMED", 42f, new Vector2(0f, -80f), new Vector2(700f, 60f));
             TMP_Text loseReport = CreateOrUpdateLabel(losePanel.transform, "ReportText", "Total Enemies Eliminated: 0", 28f, new Vector2(0f, -170f), new Vector2(700f, 260f));
             Button loseRetryButton = CreateOrUpdateButton(losePanel.transform, "RetryButton", "Retry", new Vector2(-120f, -470f), new Vector2(220f, 56f));

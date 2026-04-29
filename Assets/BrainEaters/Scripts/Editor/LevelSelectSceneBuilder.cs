@@ -188,9 +188,11 @@ namespace BrainEaters.EditorTools
             Button playButton = CreateMenuButton(mainMenuRoot.transform, "PlayButton", "PLAY", new Vector2(220f, 78f), greenButtonSprite, buttonTextStyle);
 
             GameObject tutorialPopupRoot = CreateReferencePopup(managerRoot, "TutorialPopupRoot", tutorialReference);
+            UiVisibilityAnimatorUtility.EnsureVisibilityAnimator(tutorialPopupRoot);
             Button tutorialStartButton = CreateMenuButton(tutorialPopupRoot.transform, "StartButton", "START", new Vector2(0f, 76f), greenButtonSprite, buttonTextStyle);
 
             GameObject howToPlayPopupRoot = CreateReferencePopup(managerRoot, "HowToPlayPopupRoot", howToPlayReference);
+            UiVisibilityAnimatorUtility.EnsureVisibilityAnimator(howToPlayPopupRoot);
             Button howBackButton = CreateMenuButton(howToPlayPopupRoot.transform, "BackButton", "BACK", new Vector2(0f, 76f), yellowButtonSprite, buttonTextStyle);
 
             SerializedObject flowObject = new SerializedObject(flowController);
