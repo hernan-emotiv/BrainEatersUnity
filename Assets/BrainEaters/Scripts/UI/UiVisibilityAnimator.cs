@@ -18,6 +18,9 @@ namespace BrainEaters.UI
         [SerializeField] private bool useUnscaledTime = true;
         [SerializeField] private bool deactivateWhenHidden = true;
         [SerializeField] private bool blockRaycastsWhenVisible = true;
+        [SerializeField] private bool playOnEnable;
+        [SerializeField] private bool visibleOnEnable = true;
+        [SerializeField] private float initialDelay;
 
         private Vector3 startScale;
         private Vector3 endScale;
@@ -29,19 +32,55 @@ namespace BrainEaters.UI
         private bool animating;
         private bool targetVisible;
         private bool hasInitializedState;
+        private bool waitingForInitialDelay;
+        private float initialDelayElapsedTime;
+        private bool hasPlayedEnableAnimation;
+        private bool waitingForFirstVisibleFrame;
+        private int framesBeforeEntrance;
 
         private void Awake()
         {
             ResolveReferences();
         }
 
+        private void OnEnable()
+        {
+            TryPlayEnableAnimation();
+        }
+
+        private void Start()
+        {
+            TryPlayEnableAnimation();
+        }
+
+        private void OnDisable()
+        {
+            hasPlayedEnableAnimation = false;
+            waitingForFirstVisibleFrame = false;
+            framesBeforeEntrance = 0;
+            waitingForInitialDelay = false;
+            animating = false;
+        }
+
         private void OnValidate()
         {
             ResolveReferences();
+            initialDelay = Mathf.Max(0f, initialDelay);
         }
 
         private void Update()
         {
+            if (waitingForFirstVisibleFrame)
+            {
+                TickEntranceFrameDelay();
+                return;
+            }
+
+            if (waitingForInitialDelay)
+            {
+                TickInitialDelay();
+            }
+
             if (!animating || targetRect == null || canvasGroup == null)
             {
                 return;
@@ -81,6 +120,55 @@ namespace BrainEaters.UI
         public void Hide(bool instant = false)
         {
             SetVisible(false, instant);
+        }
+
+        public void PlayEntrance()
+        {
+            ResolveReferences();
+            if (targetRect == null || canvasGroup == null)
+            {
+                return;
+            }
+
+            ApplyState(false);
+            targetVisible = false;
+            hasInitializedState = true;
+            ArmEntranceAnimation();
+        }
+
+        private void TryPlayEnableAnimation()
+        {
+            if (!playOnEnable)
+            {
+                return;
+            }
+
+            if (hasPlayedEnableAnimation)
+            {
+                return;
+            }
+
+            ResolveReferences();
+            if (targetRect == null || canvasGroup == null)
+            {
+                return;
+            }
+
+            hasPlayedEnableAnimation = true;
+            animating = false;
+            waitingForInitialDelay = false;
+            initialDelayElapsedTime = 0f;
+
+            if (visibleOnEnable)
+            {
+                ApplyState(false);
+                targetVisible = false;
+                hasInitializedState = true;
+                ArmEntranceAnimation();
+                return;
+            }
+
+            SetVisible(false, true);
         }
 
         public void SetVisible(bool visible, bool instant = false)
@@ -142,6 +230,48 @@ namespace BrainEaters.UI
             canvasGroup.alpha = visible ? visibleAlpha : hiddenAlpha;
             canvasGroup.interactable = visible;
             canvasGroup.blocksRaycasts = visible && blockRaycastsWhenVisible;
+        }
+
+        private void ArmEntranceAnimation()
+        {
+            waitingForFirstVisibleFrame = true;
+            framesBeforeEntrance = 1;
+            waitingForInitialDelay = false;
+            initialDelayElapsedTime = 0f;
+        }
+
+        private void TickEntranceFrameDelay()
+        {
+            if (framesBeforeEntrance > 0)
+            {
+                framesBeforeEntrance--;
+                return;
+            }
+
+            waitingForFirstVisibleFrame = false;
+            waitingForInitialDelay = true;
+            initialDelayElapsedTime = 0f;
+        }
+
+        private void TickInitialDelay()
+        {
+            float deltaTime = useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+            if (deltaTime <= 0f)
+            {
+                return;
+            }
+
+            if (initialDelay > 0f)
+            {
+                initialDelayElapsedTime += deltaTime;
+                if (initialDelayElapsedTime < initialDelay)
+                {
+                    return;
+                }
+            }
+
+            waitingForInitialDelay = false;
+            SetVisible(visibleOnEnable);
         }
 
         private void ResolveReferences()
