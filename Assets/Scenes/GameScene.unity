@@ -414,14 +414,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 2161746304914897934, guid: a574f0650c71b4945b0cd16b179c0c36, type: 3}
-      propertyPath: m_SizeDelta.y
-      value: 144.1075
-      objectReference: {fileID: 0}
-    - target: {fileID: 2161746304914897934, guid: a574f0650c71b4945b0cd16b179c0c36, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 2279377765131371670, guid: a574f0650c71b4945b0cd16b179c0c36, type: 3}
       propertyPath: m_sharedMaterial
       value: 
@@ -434,26 +426,16 @@ PrefabInstance:
       propertyPath: m_sharedMaterial
       value: 
       objectReference: {fileID: 1161255245}
-    - target: {fileID: 8904109939288758091, guid: a574f0650c71b4945b0cd16b179c0c36, type: 3}
-      propertyPath: m_SizeDelta.x
-      value: -18.3937
-      objectReference: {fileID: 0}
-    - target: {fileID: 8904109939288758091, guid: a574f0650c71b4945b0cd16b179c0c36, type: 3}
-      propertyPath: m_SizeDelta.y
-      value: 9.8911
-      objectReference: {fileID: 0}
-    - target: {fileID: 8904109939288758091, guid: a574f0650c71b4945b0cd16b179c0c36, type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: 4.0874023
-      objectReference: {fileID: 0}
-    - target: {fileID: 8904109939288758091, guid: a574f0650c71b4945b0cd16b179c0c36, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: -0.8580017
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 4484155229106188465, guid: a574f0650c71b4945b0cd16b179c0c36, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1119949801}
+    - targetCorrespondingSourceObject: {fileID: 4484155229106188465, guid: a574f0650c71b4945b0cd16b179c0c36, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1119949800}
   m_SourcePrefab: {fileID: 100100000, guid: a574f0650c71b4945b0cd16b179c0c36, type: 3}
 --- !u!224 &381005211 stripped
 RectTransform:
@@ -742,7 +724,6 @@ GameObject:
   - component: {fileID: 426035508}
   - component: {fileID: 426035507}
   - component: {fileID: 426035511}
-  - component: {fileID: 426035512}
   m_Layer: 5
   m_Name: GameplayHUDCanvas
   m_TagString: Untagged
@@ -853,29 +834,6 @@ MonoBehaviour:
   heartHealthView: {fileID: 448609824}
   bombProgressBar: {fileID: 381005212}
   timerText: {fileID: 920657586}
---- !u!114 &426035512
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 426035506}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6403bee5949bf4e73b750c36a9902873, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  gameManager: {fileID: 540388571}
-  winPanel: {fileID: 0}
-  losePanel: {fileID: 0}
-  winTitleText: {fileID: 0}
-  winReportText: {fileID: 0}
-  loseTitleText: {fileID: 0}
-  loseReportText: {fileID: 0}
-  winRetryButton: {fileID: 0}
-  loseRetryButton: {fileID: 0}
-  winBackToMenuButton: {fileID: 0}
-  loseBackToMenuButton: {fileID: 0}
 --- !u!1 &443163376
 GameObject:
   m_ObjectHideFlags: 0
@@ -935,6 +893,8 @@ GameObject:
   - component: {fileID: 448609823}
   - component: {fileID: 448609822}
   - component: {fileID: 448609824}
+  - component: {fileID: 448609826}
+  - component: {fileID: 448609825}
   m_Layer: 0
   m_Name: HealthHeartsPanel
   m_TagString: Untagged
@@ -1012,6 +972,46 @@ MonoBehaviour:
   heartTemplate: {fileID: 1771207182}
   autoCollectExistingChildren: 1
   animateVisibility: 1
+--- !u!114 &448609825
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 448609820}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 750cb9835b94406b837156f01ed6424a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetRect: {fileID: 448609821}
+  canvasGroup: {fileID: 448609826}
+  visibleScale: {x: 1, y: 1, z: 1}
+  hiddenScale: {x: 0.86, y: 0.86, z: 0.86}
+  visibleAlpha: 1
+  hiddenAlpha: 0
+  showDuration: 0.18
+  hideDuration: 0.14
+  showEase: 3
+  hideEase: 4
+  useUnscaledTime: 1
+  deactivateWhenHidden: 1
+  blockRaycastsWhenVisible: 0
+  playOnEnable: 1
+  visibleOnEnable: 1
+  initialDelay: 1.5
+--- !u!225 &448609826
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 448609820}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!21 &508207052
 Material:
   serializedVersion: 8
@@ -1965,7 +1965,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 704656156688298487, guid: 5ee8ae4c3bde64258968bcb78003f448, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 38.48001
+      value: 38.48004
       objectReference: {fileID: 0}
     - target: {fileID: 704656156688298487, guid: 5ee8ae4c3bde64258968bcb78003f448, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -2048,6 +2048,8 @@ GameObject:
   - component: {fileID: 992210265}
   - component: {fileID: 992210267}
   - component: {fileID: 992210266}
+  - component: {fileID: 992210269}
+  - component: {fileID: 992210268}
   m_Layer: 0
   m_Name: GameTimer
   m_TagString: Untagged
@@ -2113,6 +2115,46 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 992210264}
   m_CullTransparentMesh: 1
+--- !u!114 &992210268
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 992210264}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 750cb9835b94406b837156f01ed6424a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetRect: {fileID: 992210265}
+  canvasGroup: {fileID: 992210269}
+  visibleScale: {x: 1, y: 1, z: 1}
+  hiddenScale: {x: 0.86, y: 0.86, z: 0.86}
+  visibleAlpha: 1
+  hiddenAlpha: 0
+  showDuration: 0.18
+  hideDuration: 0.14
+  showEase: 3
+  hideEase: 4
+  useUnscaledTime: 1
+  deactivateWhenHidden: 1
+  blockRaycastsWhenVisible: 0
+  playOnEnable: 1
+  visibleOnEnable: 1
+  initialDelay: 0.5
+--- !u!225 &992210269
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 992210264}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &995933366
 GameObject:
   m_ObjectHideFlags: 0
@@ -2188,6 +2230,51 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 995933366}
   m_CullTransparentMesh: 1
+--- !u!1 &1119949799 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4484155229106188465, guid: a574f0650c71b4945b0cd16b179c0c36, type: 3}
+  m_PrefabInstance: {fileID: 381005210}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1119949800
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1119949799}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 750cb9835b94406b837156f01ed6424a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetRect: {fileID: 381005211}
+  canvasGroup: {fileID: 1119949801}
+  visibleScale: {x: 1, y: 1, z: 1}
+  hiddenScale: {x: 0.86, y: 0.86, z: 0.86}
+  visibleAlpha: 1
+  hiddenAlpha: 0
+  showDuration: 0.18
+  hideDuration: 0.14
+  showEase: 3
+  hideEase: 4
+  useUnscaledTime: 1
+  deactivateWhenHidden: 1
+  blockRaycastsWhenVisible: 0
+  playOnEnable: 1
+  visibleOnEnable: 1
+  initialDelay: 2
+--- !u!225 &1119949801
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1119949799}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &1135977145
 GameObject:
   m_ObjectHideFlags: 0
@@ -2492,6 +2579,8 @@ GameObject:
   - component: {fileID: 1560551934}
   - component: {fileID: 1560551933}
   - component: {fileID: 1560551932}
+  - component: {fileID: 1560551936}
+  - component: {fileID: 1560551935}
   m_Layer: 0
   m_Name: KillTrackerPanel
   m_TagString: Untagged
@@ -2579,6 +2668,46 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1560551930}
   m_CullTransparentMesh: 1
+--- !u!114 &1560551935
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1560551930}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 750cb9835b94406b837156f01ed6424a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetRect: {fileID: 1560551931}
+  canvasGroup: {fileID: 1560551936}
+  visibleScale: {x: 1, y: 1, z: 1}
+  hiddenScale: {x: 0.86, y: 0.86, z: 0.86}
+  visibleAlpha: 1
+  hiddenAlpha: 0
+  showDuration: 0.18
+  hideDuration: 0.14
+  showEase: 3
+  hideEase: 4
+  useUnscaledTime: 1
+  deactivateWhenHidden: 1
+  blockRaycastsWhenVisible: 0
+  playOnEnable: 1
+  visibleOnEnable: 1
+  initialDelay: 0.5
+--- !u!225 &1560551936
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1560551930}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &1573874579
 GameObject:
   m_ObjectHideFlags: 0
