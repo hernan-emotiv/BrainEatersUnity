@@ -283,7 +283,7 @@ MonoBehaviour:
   m_OverrideVoxelSize: 0
   m_VoxelSize: 0.16666667
   m_MinRegionArea: 2
-  m_NavMeshData: {fileID: 0}
+  m_NavMeshData: {fileID: 23800000, guid: 53855091ca7cd4b47964250c470759f3, type: 2}
   m_BuildHeightMesh: 0
 --- !u!1 &1510249695714612723
 GameObject:
@@ -404,7 +404,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetableWhenOnline: 1
-  maxHealth: 9999
+  maxHealth: 25
   targetPoint: {fileID: 8344715391699784272}
 --- !u!114 &4544586008054934904
 MonoBehaviour:
@@ -422,9 +422,10 @@ MonoBehaviour:
   feedbackRoots:
   - {fileID: 8547261396995875762}
   - {fileID: 879810934528353229}
-  hitWobbleAngle: 7
-  hitWobbleDuration: 0.18
-  hitWobbleFrequency: 26
+  hitWobbleAngle: 13
+  hitWobbleDuration: 0.28
+  hitWobbleFrequency: 20
+  hitRecoilAngle: 3
 --- !u!1 &1711029933646039651
 GameObject:
   m_ObjectHideFlags: 0
@@ -961,8 +962,8 @@ MonoBehaviour:
   bridgeRaiseDuration: 0.42
   launchDelaySeconds: 0.08
   gateOpenDuration: 0.55
-  leftGateOpenAngle: -105
-  rightGateOpenAngle: 105
+  leftGateOpenAngle: 105
+  rightGateOpenAngle: -105
   returnBridgeAfterLaunch: 1
   bridgeReturnDelaySeconds: 1.6
   bridgeReturnDuration: 0.5

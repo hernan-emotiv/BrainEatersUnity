@@ -5,17 +5,28 @@ namespace BrainEaters.Input
 {
     public class KeyboardMouseInputSource : MonoBehaviour, IGameplayInputSource
     {
+        private enum MouseLookMode
+        {
+            DragJoystick = 0,
+            Delta = 1
+        }
+
         [SerializeField] private bool enableMouseLook = true;
+        [SerializeField] private MouseLookMode mouseLookMode = MouseLookMode.DragJoystick;
         [SerializeField] private bool requireMouseButtonForLook = true;
-        [SerializeField] private bool lockCursorWhileLooking = true;
+        [SerializeField] private bool lockCursorWhileLooking;
         [SerializeField] private float mouseLookSensitivity = 0.015f;
+        [SerializeField] private float dragLookRangePixels = 180f;
 
         public Vector2 Move { get; private set; }
         public Vector2 Look { get; private set; }
         public bool UsesFacingRelativeMovement => false;
-        public bool UsesDeltaLookInput => true;
+        public bool UsesDeltaLookInput => mouseLookMode == MouseLookMode.Delta;
         public bool IsChargeHeld { get; private set; }
         public bool WasBombPressedThisFrame { get; private set; }
+
+        private bool isDraggingLook;
+        private Vector2 dragStartScreenPosition;
 
         private void Update()
         {
@@ -47,15 +58,31 @@ namespace BrainEaters.Input
         {
             if (!enableMouseLook || mouse == null)
             {
+                isDraggingLook = false;
                 return Vector2.zero;
             }
 
-            if (requireMouseButtonForLook && !IsAnyMouseButtonPressed(mouse))
+            bool isButtonPressed = IsAnyMouseButtonPressed(mouse);
+            if (requireMouseButtonForLook && !isButtonPressed)
             {
+                isDraggingLook = false;
                 return Vector2.zero;
             }
 
-            return mouse.delta.ReadValue() * mouseLookSensitivity;
+            if (mouseLookMode == MouseLookMode.Delta)
+            {
+                return mouse.delta.ReadValue() * mouseLookSensitivity;
+            }
+
+            Vector2 screenPosition = mouse.position.ReadValue();
+            if (!isDraggingLook || WasAnyMouseButtonPressedThisFrame(mouse))
+            {
+                isDraggingLook = true;
+                dragStartScreenPosition = screenPosition;
+            }
+
+            Vector2 dragDelta = screenPosition - dragStartScreenPosition;
+            return Vector2.ClampMagnitude(dragDelta / Mathf.Max(1f, dragLookRangePixels), 1f);
         }
 
         private void UpdateCursorState(Mouse mouse)
@@ -73,6 +100,11 @@ namespace BrainEaters.Input
         private static bool IsAnyMouseButtonPressed(Mouse mouse)
         {
             return mouse.leftButton.isPressed || mouse.rightButton.isPressed || mouse.middleButton.isPressed;
+        }
+
+        private static bool WasAnyMouseButtonPressedThisFrame(Mouse mouse)
+        {
+            return mouse.leftButton.wasPressedThisFrame || mouse.rightButton.wasPressedThisFrame || mouse.middleButton.wasPressedThisFrame;
         }
 
         private static Vector2 ReadMove(Keyboard keyboard)

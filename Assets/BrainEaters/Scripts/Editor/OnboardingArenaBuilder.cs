@@ -366,8 +366,8 @@ namespace BrainEaters.EditorTools
             serialized.FindProperty("bridgeRaiseDuration").floatValue = 0.42f;
             serialized.FindProperty("launchDelaySeconds").floatValue = 0.08f;
             serialized.FindProperty("gateOpenDuration").floatValue = 0.55f;
-            serialized.FindProperty("leftGateOpenAngle").floatValue = -105f;
-            serialized.FindProperty("rightGateOpenAngle").floatValue = 105f;
+            serialized.FindProperty("leftGateOpenAngle").floatValue = 105f;
+            serialized.FindProperty("rightGateOpenAngle").floatValue = -105f;
             serialized.FindProperty("stopSpawningOnActivation").boolValue = true;
             serialized.FindProperty("killRemainingEnemiesOnActivation").boolValue = true;
             serialized.FindProperty("killRemainingEnemiesDelay").floatValue = 1.25f;

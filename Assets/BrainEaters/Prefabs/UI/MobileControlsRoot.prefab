@@ -689,7 +689,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9bc573c4b99d04e45b4892697af5022a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  forceMobileControlsInEditor: 1
+  forceMobileControlsInEditor: 0
   initialControlMode: 0
   controlsRoot: {fileID: 6236662191305740099}
   visibleJoysticksRoot: {fileID: 2972223844774417938}

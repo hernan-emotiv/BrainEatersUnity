@@ -8,9 +8,10 @@ namespace BrainEaters.GameFlow
     {
         [SerializeField] private TurretHealth targetHealth;
         [SerializeField] private Transform[] feedbackRoots = System.Array.Empty<Transform>();
-        [SerializeField] private float hitWobbleAngle = 7f;
-        [SerializeField] private float hitWobbleDuration = 0.18f;
-        [SerializeField] private float hitWobbleFrequency = 26f;
+        [SerializeField] private float hitWobbleAngle = 13f;
+        [SerializeField] private float hitWobbleDuration = 0.28f;
+        [SerializeField] private float hitWobbleFrequency = 20f;
+        [SerializeField] private float hitRecoilAngle = 3f;
 
         private Quaternion[] baseRotations = System.Array.Empty<Quaternion>();
         private Coroutine feedbackRoutine;
@@ -83,13 +84,16 @@ namespace BrainEaters.GameFlow
                 elapsed += Time.deltaTime;
                 float normalized = Mathf.Clamp01(elapsed / Mathf.Max(0.0001f, hitWobbleDuration));
                 float falloff = 1f - normalized;
-                float angle = Mathf.Sin(elapsed * hitWobbleFrequency) * hitWobbleAngle * falloff;
+                float openPush = Mathf.Sin(normalized * Mathf.PI) * hitWobbleAngle;
+                float recoil = Mathf.Sin(normalized * Mathf.PI * 4f) * hitRecoilAngle * falloff;
 
                 for (int i = 0; i < feedbackRoots.Length; i++)
                 {
                     Transform root = feedbackRoots[i];
                     if (root != null && i < baseRotations.Length)
                     {
+                        float outwardSign = GetOutwardSign(root, i);
+                        float angle = outwardSign * (openPush + recoil);
                         root.localRotation = baseRotations[i] * Quaternion.Euler(0f, angle, 0f);
                     }
                 }
@@ -99,6 +103,25 @@ namespace BrainEaters.GameFlow
 
             ApplyBaseRotations();
             feedbackRoutine = null;
+        }
+
+        private static float GetOutwardSign(Transform root, int index)
+        {
+            if (root != null)
+            {
+                string lowerName = root.name.ToLowerInvariant();
+                if (lowerName.Contains("left"))
+                {
+                    return 1f;
+                }
+
+                if (lowerName.Contains("right"))
+                {
+                    return -1f;
+                }
+            }
+
+            return index == 0 ? 1f : -1f;
         }
 
         private void ResolveReferences()

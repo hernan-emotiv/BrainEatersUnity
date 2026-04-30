@@ -297,7 +297,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   enableMouseLook: 1
+  mouseLookMode: 0
+  requireMouseButtonForLook: 1
+  lockCursorWhileLooking: 0
   mouseLookSensitivity: 0.015
+  dragLookRangePixels: 180
 --- !u!114 &5187834875856360923
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -446,6 +450,7 @@ MonoBehaviour:
   chargeButton: {fileID: 0}
   bombButton: {fileID: 0}
   controlMode: 0
+  editorMouseLookRangePixels: 180
 --- !u!1 &6033100770219183424
 GameObject:
   m_ObjectHideFlags: 0

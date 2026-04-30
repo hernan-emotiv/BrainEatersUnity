@@ -28,7 +28,7 @@ namespace BrainEaters.Input
         {
             ResolveReferences();
             BindButton();
-            useMobileControls = Application.isMobilePlatform || forceMobileControlsInEditor;
+            useMobileControls = ShouldUseMobileControls();
             ApplyInputSource();
             SetControlMode(initialControlMode);
         }
@@ -37,7 +37,7 @@ namespace BrainEaters.Input
         {
             ResolveReferences();
             BindButton();
-            useMobileControls = Application.isMobilePlatform || forceMobileControlsInEditor;
+            useMobileControls = ShouldUseMobileControls();
             ApplyInputSource();
         }
 
@@ -142,6 +142,15 @@ namespace BrainEaters.Input
             }
         }
 
+        private bool ShouldUseMobileControls()
+        {
+#if UNITY_EDITOR
+            return forceMobileControlsInEditor;
+#else
+            return Application.isMobilePlatform;
+#endif
+        }
+
         private void BindButton()
         {
             if (modeToggleButton == null)
@@ -191,6 +200,12 @@ namespace BrainEaters.Input
             {
                 Transform invisible = transform.Find("ControlsVisuals/InvisibleJoysticksRoot");
                 invisibleJoysticksRoot = invisible != null ? invisible.gameObject : null;
+            }
+
+            if (rightJoystickRoot == null)
+            {
+                Transform right = transform.Find("ControlsVisuals/VisibleJoysticksRoot/RightJoystickRoot");
+                rightJoystickRoot = right != null ? right.gameObject : null;
             }
         }
     }

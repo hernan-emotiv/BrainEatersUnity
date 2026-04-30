@@ -1,5 +1,6 @@
 using BrainEaters.Input;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace BrainEaters.Cameras
 {
@@ -15,6 +16,8 @@ namespace BrainEaters.Cameras
         [SerializeField] private float pitchSensitivity = 120f;
         [SerializeField] private Vector2 pitchLimits = new Vector2(15f, 65f);
         [SerializeField] private float singleJoystickFollowSpeed = 12f;
+        [SerializeField] private bool enableEditorMouseDragLook = true;
+        [SerializeField] private float editorMouseLookRangePixels = 180f;
         [SerializeField] private PlayerInputRouter inputRouter;
 
         private float orbitDistance;
@@ -22,6 +25,8 @@ namespace BrainEaters.Cameras
         private float pitch;
         private MobileControlMode controlMode = MobileControlMode.DualJoystick;
         private bool orbitInitialized;
+        private bool isEditorMouseDragging;
+        private Vector2 editorMouseDragStartPosition;
 
         public void SetTarget(Transform followTarget)
         {
@@ -85,6 +90,11 @@ namespace BrainEaters.Cameras
         private void UpdateOrbitAngles(float deltaTime)
         {
             Vector2 lookInput = inputRouter != null ? inputRouter.Look : Vector2.zero;
+            if (lookInput.sqrMagnitude <= 0.0001f)
+            {
+                lookInput = ReadEditorMouseDragLook();
+            }
+
             float lookTimeFactor = inputRouter != null && inputRouter.UsesDeltaLookInput ? 1f : deltaTime;
 
             if (controlMode == MobileControlMode.SingleJoystick)
@@ -101,6 +111,36 @@ namespace BrainEaters.Cameras
 
             yaw += lookInput.x * yawSensitivity * lookTimeFactor;
             pitch = Mathf.Clamp(pitch - (lookInput.y * pitchSensitivity * lookTimeFactor), pitchLimits.x, pitchLimits.y);
+        }
+
+        private Vector2 ReadEditorMouseDragLook()
+        {
+#if UNITY_EDITOR
+            if (!Application.isPlaying || !enableEditorMouseDragLook)
+            {
+                isEditorMouseDragging = false;
+                return Vector2.zero;
+            }
+
+            Mouse mouse = Mouse.current;
+            if (mouse == null || !mouse.leftButton.isPressed)
+            {
+                isEditorMouseDragging = false;
+                return Vector2.zero;
+            }
+
+            Vector2 screenPosition = mouse.position.ReadValue();
+            if (!isEditorMouseDragging || mouse.leftButton.wasPressedThisFrame)
+            {
+                isEditorMouseDragging = true;
+                editorMouseDragStartPosition = screenPosition;
+            }
+
+            Vector2 dragDelta = screenPosition - editorMouseDragStartPosition;
+            return Vector2.ClampMagnitude(dragDelta / Mathf.Max(1f, editorMouseLookRangePixels), 1f);
+#else
+            return Vector2.zero;
+#endif
         }
 
         private void InitializeOrbitIfNeeded()

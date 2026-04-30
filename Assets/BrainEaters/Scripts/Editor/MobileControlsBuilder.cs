@@ -119,6 +119,62 @@ namespace BrainEaters.EditorTools
             EditorGUIUtility.PingObject(root);
         }
 
+        [MenuItem("Brain Eaters/Repair Mobile Controls References In Current Scene")]
+        public static void RepairMobileControlsReferencesInCurrentScene()
+        {
+            PlayerInputRouter playerInputRouter = Object.FindFirstObjectByType<PlayerInputRouter>();
+            KeyboardMouseInputSource keyboardInput = Object.FindFirstObjectByType<KeyboardMouseInputSource>();
+            MobileGameplayInputSource mobileInput = Object.FindFirstObjectByType<MobileGameplayInputSource>();
+            MobileControlsManager manager = Object.FindFirstObjectByType<MobileControlsManager>();
+            CameraFollow cameraFollow = Object.FindFirstObjectByType<CameraFollow>();
+
+            if (playerInputRouter == null || mobileInput == null || manager == null)
+            {
+                Debug.LogError("Could not repair mobile controls. Missing PlayerInputRouter, MobileGameplayInputSource, or MobileControlsManager in current scene.");
+                return;
+            }
+
+            GameObject root = manager.gameObject;
+            Transform visualsRoot = FindChild(root.transform, "ControlsVisuals");
+            Transform visibleJoysticksRoot = FindChild(root.transform, "VisibleJoysticksRoot");
+            Transform rightJoystickRoot = FindChild(root.transform, "RightJoystickRoot");
+            Transform invisibleJoysticksRoot = FindChild(root.transform, "InvisibleJoysticksRoot");
+            VirtualJoystick leftJoystick = FindComponentByName<VirtualJoystick>("LeftJoystick");
+            VirtualJoystick rightJoystick = FindComponentByName<VirtualJoystick>("RightJoystick");
+            InvisibleTouchJoystick invisibleLeftJoystick = FindComponentByName<InvisibleTouchJoystick>("InvisibleLeftJoystick");
+            InvisibleTouchJoystick invisibleRightJoystick = FindComponentByName<InvisibleTouchJoystick>("InvisibleRightJoystick");
+            TouchActionButton chargeButton = FindComponentByName<TouchActionButton>("ChargeButton");
+            TouchActionButton bombButton = FindComponentByName<TouchActionButton>("BombButton");
+            Button modeButton = FindComponentByName<Button>("ControlModeButton");
+            TMP_Text modeLabel = modeButton != null ? modeButton.GetComponentInChildren<TextMeshProUGUI>(true) : null;
+
+            SerializedObject inputObject = new SerializedObject(mobileInput);
+            inputObject.FindProperty("moveJoystick").objectReferenceValue = leftJoystick;
+            inputObject.FindProperty("lookJoystick").objectReferenceValue = rightJoystick;
+            inputObject.FindProperty("invisibleMoveJoystick").objectReferenceValue = invisibleLeftJoystick;
+            inputObject.FindProperty("invisibleLookJoystick").objectReferenceValue = invisibleRightJoystick;
+            inputObject.FindProperty("chargeButton").objectReferenceValue = chargeButton;
+            inputObject.FindProperty("bombButton").objectReferenceValue = bombButton;
+            inputObject.ApplyModifiedPropertiesWithoutUndo();
+
+            SerializedObject managerObject = new SerializedObject(manager);
+            managerObject.FindProperty("controlsRoot").objectReferenceValue = visualsRoot != null ? visualsRoot.gameObject : null;
+            managerObject.FindProperty("visibleJoysticksRoot").objectReferenceValue = visibleJoysticksRoot != null ? visibleJoysticksRoot.gameObject : null;
+            managerObject.FindProperty("rightJoystickRoot").objectReferenceValue = rightJoystickRoot != null ? rightJoystickRoot.gameObject : null;
+            managerObject.FindProperty("invisibleJoysticksRoot").objectReferenceValue = invisibleJoysticksRoot != null ? invisibleJoysticksRoot.gameObject : null;
+            managerObject.FindProperty("modeToggleButton").objectReferenceValue = modeButton;
+            managerObject.FindProperty("modeLabel").objectReferenceValue = modeLabel;
+            managerObject.FindProperty("playerInputRouter").objectReferenceValue = playerInputRouter;
+            managerObject.FindProperty("keyboardMouseInputSource").objectReferenceValue = keyboardInput;
+            managerObject.FindProperty("mobileGameplayInputSource").objectReferenceValue = mobileInput;
+            managerObject.FindProperty("cameraFollow").objectReferenceValue = cameraFollow;
+            managerObject.ApplyModifiedPropertiesWithoutUndo();
+
+            EditorUtility.SetDirty(mobileInput);
+            EditorUtility.SetDirty(manager);
+            Debug.Log("Repaired mobile control references in current scene.", manager);
+        }
+
         private static InvisibleTouchJoystick CreateInvisibleJoystick(Transform parent, string name, Vector2 anchorMin, Vector2 anchorMax)
         {
             GameObject root = GetOrCreateUiChild(parent, name);
@@ -286,6 +342,39 @@ namespace BrainEaters.EditorTools
             child.transform.localRotation = Quaternion.identity;
             child.transform.localPosition = Vector3.zero;
             return child;
+        }
+
+        private static Transform FindChild(Transform root, string childName)
+        {
+            if (root == null)
+            {
+                return null;
+            }
+
+            Transform[] children = root.GetComponentsInChildren<Transform>(true);
+            for (int i = 0; i < children.Length; i++)
+            {
+                if (children[i] != null && children[i].name == childName)
+                {
+                    return children[i];
+                }
+            }
+
+            return null;
+        }
+
+        private static T FindComponentByName<T>(string objectName) where T : Component
+        {
+            T[] components = Object.FindObjectsByType<T>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            for (int i = 0; i < components.Length; i++)
+            {
+                if (components[i] != null && components[i].name == objectName)
+                {
+                    return components[i];
+                }
+            }
+
+            return null;
         }
 
         private static void StretchFull(RectTransform rectTransform)

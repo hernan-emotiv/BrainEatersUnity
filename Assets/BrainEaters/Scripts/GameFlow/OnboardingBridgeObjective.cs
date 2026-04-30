@@ -21,8 +21,8 @@ namespace BrainEaters.GameFlow
         [SerializeField] private float bridgeRaiseDuration = 0.42f;
         [SerializeField] private float launchDelaySeconds = 0.12f;
         [SerializeField] private float gateOpenDuration = 0.55f;
-        [SerializeField] private float leftGateOpenAngle = -105f;
-        [SerializeField] private float rightGateOpenAngle = 105f;
+        [SerializeField] private float leftGateOpenAngle = 105f;
+        [SerializeField] private float rightGateOpenAngle = -105f;
         [SerializeField] private bool returnBridgeAfterLaunch = true;
         [SerializeField] private float bridgeReturnDelaySeconds = 1.6f;
         [SerializeField] private float bridgeReturnDuration = 0.5f;

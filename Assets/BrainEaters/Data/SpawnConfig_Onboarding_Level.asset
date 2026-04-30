@@ -14,4 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   initialDelaySeconds: 0.5
   spawnIntervalSeconds: 0.35
-  maxAliveEnemies: 50
+  maxAliveEnemies: 150
