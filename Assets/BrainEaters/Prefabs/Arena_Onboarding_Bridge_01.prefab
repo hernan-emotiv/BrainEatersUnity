@@ -405,7 +405,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetableWhenOnline: 1
-  maxHealth: 25
+  maxHealth: 30
   targetPoint: {fileID: 8344715391699784272}
   debugCurrentHealth: 0
   debugIsTargetable: 0
@@ -935,7 +935,7 @@ BoxCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 1
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
   m_Size: {x: 13, y: 2.5, z: 9}
   m_Center: {x: 0, y: 1.2, z: -7}
@@ -972,6 +972,10 @@ MonoBehaviour:
   stopSpawningOnActivation: 1
   killRemainingEnemiesOnActivation: 1
   killRemainingEnemiesDelay: 1.25
+  launchAllRemainingEnemiesOnActivation: 1
+  fallbackLaunchHorizontalImpulse: 10
+  fallbackLaunchUpwardImpulse: 6
+  fallbackLaunchTorqueImpulse: 8
 --- !u!1 &2996602942857532897
 GameObject:
   m_ObjectHideFlags: 0
@@ -1891,6 +1895,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8449101543681938764}
+  - component: {fileID: 768015187343643115}
+  - component: {fileID: 1767505187353567863}
   m_Layer: 0
   m_Name: MentalBombLeverIndicator
   m_TagString: Untagged
@@ -1907,7 +1913,7 @@ Transform:
   m_GameObject: {fileID: 6179292169346351306}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 3.88, y: 0, z: -4.81}
+  m_LocalPosition: {x: 4.48, y: 0, z: -6.85}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1915,6 +1921,40 @@ Transform:
   - {fileID: 2273249191996922009}
   m_Father: {fileID: 1529929836423303467}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &768015187343643115
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6179292169346351306}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f11f4b2e0d53446569e1fcee7807c788, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  activationTarget: {fileID: 422697703102833099}
+--- !u!65 &1767505187353567863
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6179292169346351306}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 6.0431213, y: 1.9518645, z: 5.603042}
+  m_Center: {x: -0.028012753, y: 0.47593248, z: -0.06478095}
 --- !u!1 &6486404934308517863
 GameObject:
   m_ObjectHideFlags: 0

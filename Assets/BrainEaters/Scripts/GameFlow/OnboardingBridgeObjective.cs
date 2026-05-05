@@ -29,6 +29,10 @@ namespace BrainEaters.GameFlow
         [SerializeField] private bool stopSpawningOnActivation = true;
         [SerializeField] private bool killRemainingEnemiesOnActivation = true;
         [SerializeField] private float killRemainingEnemiesDelay = 1.25f;
+        [SerializeField] private bool launchAllRemainingEnemiesOnActivation = true;
+        [SerializeField] private float fallbackLaunchHorizontalImpulse = 10f;
+        [SerializeField] private float fallbackLaunchUpwardImpulse = 6f;
+        [SerializeField] private float fallbackLaunchTorqueImpulse = 8f;
 
         private Quaternion bridgeClosedRotation;
         private Vector3 gateClosedPosition;
@@ -73,10 +77,10 @@ namespace BrainEaters.GameFlow
                 return;
             }
 
+            ResolveReferences();
             hasActivated = true;
             if (stopSpawningOnActivation)
             {
-                ResolveReferences();
                 spawnManager?.SetSpawningEnabled(false);
             }
 
@@ -155,16 +159,30 @@ namespace BrainEaters.GameFlow
 
         private IEnumerator PlayActivation()
         {
+            ResolveReferences();
+
             if (launchDelaySeconds > 0f)
             {
                 yield return new WaitForSeconds(launchDelaySeconds);
             }
 
-            launchZone?.LaunchTrackedEnemies();
-            if (killRemainingEnemiesOnActivation)
+            int launchedCount = launchZone != null ? launchZone.LaunchTrackedEnemies() : 0;
+            if (launchAllRemainingEnemiesOnActivation)
+            {
+                launchedCount += LaunchRemainingEnemies();
+            }
+
+            if (killRemainingEnemiesOnActivation || launchAllRemainingEnemiesOnActivation)
             {
                 StartCoroutine(KillRemainingEnemiesAfterDelay());
             }
+
+            if (bridgePivot == null)
+            {
+                Debug.LogWarning("Onboarding bridge activated, but no BridgePivot reference was found. The gate will open, but the bridge cannot launch.", this);
+            }
+
+            Debug.Log($"Onboarding bridge activated. Enemies launched: {launchedCount}. BridgePivot: {(bridgePivot != null ? bridgePivot.name : "None")}.", this);
 
             yield return RotateBridge(bridgeClosedRotation, bridgeClosedRotation * Quaternion.Euler(bridgeRaiseAngle, 0f, 0f), bridgeRaiseDuration);
             yield return OpenGate();
@@ -278,6 +296,48 @@ namespace BrainEaters.GameFlow
             }
         }
 
+        private int LaunchRemainingEnemies()
+        {
+            EnemyHealth[] enemies = FindObjectsByType<EnemyHealth>(FindObjectsSortMode.None);
+            Transform launchOrigin = gateRoot != null ? gateRoot : transform;
+            int launchedCount = 0;
+
+            for (int i = 0; i < enemies.Length; i++)
+            {
+                EnemyHealth enemy = enemies[i];
+                if (enemy == null || !enemy.IsAlive)
+                {
+                    continue;
+                }
+
+                EnemyPhysicsLaunch launcher = enemy.GetComponent<EnemyPhysicsLaunch>();
+                if (launcher != null && launcher.IsLaunching)
+                {
+                    continue;
+                }
+
+                if (launcher == null)
+                {
+                    launcher = enemy.gameObject.AddComponent<EnemyPhysicsLaunch>();
+                }
+
+                Vector3 direction = enemy.transform.position - launchOrigin.position;
+                direction.y = 0f;
+                if (direction.sqrMagnitude <= 0.0001f)
+                {
+                    direction = launchOrigin.forward;
+                }
+
+                direction.Normalize();
+                Vector3 force = direction * fallbackLaunchHorizontalImpulse + Vector3.up * fallbackLaunchUpwardImpulse;
+                Vector3 torque = Random.insideUnitSphere * fallbackLaunchTorqueImpulse;
+                launcher.LaunchAndKill(force, torque, killRemainingEnemiesDelay);
+                launchedCount++;
+            }
+
+            return launchedCount;
+        }
+
         private void CacheInitialState()
         {
             ResolveReferences();
@@ -290,9 +350,29 @@ namespace BrainEaters.GameFlow
 
         private void ResolveReferences()
         {
+            Transform searchRoot = transform.parent != null ? transform.parent : transform.root;
+            if (bridgePivot == null)
+            {
+                bridgePivot = FindChild(searchRoot, "BridgePivot");
+            }
+
+            if (gateRoot == null)
+            {
+                gateRoot = FindChild(searchRoot, "ClosedGate");
+            }
+
+            if (gateBlocker == null && gateRoot != null)
+            {
+                gateBlocker = gateRoot.GetComponent<Collider>();
+            }
+
             if (launchZone == null)
             {
                 launchZone = GetComponentInChildren<OnboardingBridgeLaunchZone>(true);
+                if (launchZone == null && searchRoot != null)
+                {
+                    launchZone = searchRoot.GetComponentInChildren<OnboardingBridgeLaunchZone>(true);
+                }
             }
 
             if (gateTarget == null && gateRoot != null)
@@ -316,6 +396,31 @@ namespace BrainEaters.GameFlow
             {
                 spawnManager = FindFirstObjectByType<SpawnManager>();
             }
+        }
+
+        private static Transform FindChild(Transform root, string childName)
+        {
+            if (root == null)
+            {
+                return null;
+            }
+
+            if (root.name == childName)
+            {
+                return root;
+            }
+
+            for (int i = 0; i < root.childCount; i++)
+            {
+                Transform child = root.GetChild(i);
+                Transform match = FindChild(child, childName);
+                if (match != null)
+                {
+                    return match;
+                }
+            }
+
+            return null;
         }
     }
 }

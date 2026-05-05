@@ -11,6 +11,8 @@ namespace BrainEaters.Enemies
 
         private Coroutine killRoutine;
 
+        public bool IsLaunching { get; private set; }
+
         public void LaunchAndKill(Vector3 force, Vector3 torque, float killDelaySeconds)
         {
             EnemyHealth health = GetComponent<EnemyHealth>();
@@ -28,6 +30,7 @@ namespace BrainEaters.Enemies
             body.WakeUp();
             body.AddForce(force, ForceMode.Impulse);
             body.AddTorque(torque, ForceMode.Impulse);
+            IsLaunching = true;
 
             if (killRoutine != null)
             {
@@ -87,6 +90,8 @@ namespace BrainEaters.Enemies
             {
                 health.Kill();
             }
+
+            IsLaunching = false;
         }
     }
 }

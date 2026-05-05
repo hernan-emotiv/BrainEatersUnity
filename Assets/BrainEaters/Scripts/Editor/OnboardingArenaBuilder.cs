@@ -230,6 +230,7 @@ namespace BrainEaters.EditorTools
             activationArea.size = new Vector3(13f, 2.5f, 9f);
             OnboardingBridgeObjective objective = objectiveRoot.AddComponent<OnboardingBridgeObjective>();
             Transform lever = CreateLever(objectiveRoot.transform, signMaterial);
+            ConfigureBombActivationProxy(lever, objective);
             ConfigureBridgeObjective(objective, bridgePivot, gateRoot.transform, gateBlocker, gateTarget, launchZone, lever);
 
             CreateSignAndPopup(root.transform, signMaterial);
@@ -331,6 +332,7 @@ namespace BrainEaters.EditorTools
                 gate.GetComponent<OnboardingGateTarget>(),
                 launchZone,
                 activationIndicator);
+            ConfigureBombActivationProxy(activationIndicator, objective);
 
             EditorUtility.SetDirty(objective);
         }
@@ -397,10 +399,44 @@ namespace BrainEaters.EditorTools
             GameObject leverRoot = new GameObject("MentalBombLeverIndicator");
             leverRoot.transform.SetParent(parent);
             leverRoot.transform.SetLocalPositionAndRotation(new Vector3(2.8f, 0f, -5.7f), Quaternion.identity);
+            BoxCollider trigger = leverRoot.AddComponent<BoxCollider>();
+            trigger.isTrigger = true;
+            trigger.center = new Vector3(0f, 0.6f, 0f);
+            trigger.size = new Vector3(2.2f, 1.8f, 2.2f);
             CreateCube(leverRoot.transform, "Base", new Vector3(0f, 0.2f, 0f), new Vector3(0.9f, 0.25f, 0.9f), material);
             Transform handle = CreateCube(leverRoot.transform, "Handle", new Vector3(0f, 0.9f, 0f), new Vector3(0.18f, 1.2f, 0.18f), material).transform;
             handle.localRotation = Quaternion.Euler(0f, 0f, -28f);
             return leverRoot.transform;
+        }
+
+        private static void ConfigureBombActivationProxy(Transform lever, OnboardingBridgeObjective objective)
+        {
+            if (lever == null || objective == null)
+            {
+                return;
+            }
+
+            BoxCollider trigger = lever.GetComponent<BoxCollider>();
+            if (trigger == null)
+            {
+                trigger = Undo.AddComponent<BoxCollider>(lever.gameObject);
+            }
+
+            trigger.isTrigger = true;
+            trigger.center = new Vector3(0f, 0.6f, 0f);
+            trigger.size = new Vector3(2.2f, 1.8f, 2.2f);
+
+            BombActivationProxy proxy = lever.GetComponent<BombActivationProxy>();
+            if (proxy == null)
+            {
+                proxy = Undo.AddComponent<BombActivationProxy>(lever.gameObject);
+            }
+
+            SerializedObject serialized = new SerializedObject(proxy);
+            serialized.FindProperty("activationTarget").objectReferenceValue = objective;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(proxy);
+            EditorUtility.SetDirty(lever);
         }
 
         private static void CreateSignAndPopup(Transform parent, Material material)
@@ -630,6 +666,10 @@ namespace BrainEaters.EditorTools
             serialized.FindProperty("stopSpawningOnActivation").boolValue = true;
             serialized.FindProperty("killRemainingEnemiesOnActivation").boolValue = true;
             serialized.FindProperty("killRemainingEnemiesDelay").floatValue = 1.25f;
+            serialized.FindProperty("launchAllRemainingEnemiesOnActivation").boolValue = true;
+            serialized.FindProperty("fallbackLaunchHorizontalImpulse").floatValue = 10f;
+            serialized.FindProperty("fallbackLaunchUpwardImpulse").floatValue = 6f;
+            serialized.FindProperty("fallbackLaunchTorqueImpulse").floatValue = 8f;
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 

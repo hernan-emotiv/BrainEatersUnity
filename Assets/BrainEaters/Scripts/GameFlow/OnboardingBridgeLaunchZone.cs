@@ -25,7 +25,7 @@ namespace BrainEaters.GameFlow
             ResolveReferences();
         }
 
-        public void LaunchTrackedEnemies()
+        public int LaunchTrackedEnemies()
         {
             ResolveReferences();
             RefreshTrackedEnemiesFromArea();
@@ -36,6 +36,7 @@ namespace BrainEaters.GameFlow
                 direction = transform.forward;
             }
 
+            int launchedCount = 0;
             List<EnemyHealth> enemiesToLaunch = new List<EnemyHealth>(trackedEnemies);
             for (int i = 0; i < enemiesToLaunch.Count; i++)
             {
@@ -54,9 +55,11 @@ namespace BrainEaters.GameFlow
                 Vector3 force = direction * horizontalImpulse + Vector3.up * upwardImpulse;
                 Vector3 torque = Random.insideUnitSphere * torqueImpulse;
                 launcher.LaunchAndKill(force, torque, killDelaySeconds);
+                launchedCount++;
             }
 
             trackedEnemies.Clear();
+            return launchedCount;
         }
 
         private void OnTriggerEnter(Collider other)
