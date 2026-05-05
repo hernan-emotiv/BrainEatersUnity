@@ -1161,6 +1161,26 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 426035510}
     m_Modifications:
+    - target: {fileID: 128448583505003626, guid: 7c4a0f76f5b9d4147a46046508235e74, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 537.94
+      objectReference: {fileID: 0}
+    - target: {fileID: 128448583505003626, guid: 7c4a0f76f5b9d4147a46046508235e74, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 281.1446
+      objectReference: {fileID: 0}
+    - target: {fileID: 128448583505003626, guid: 7c4a0f76f5b9d4147a46046508235e74, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -1.3536
+      objectReference: {fileID: 0}
+    - target: {fileID: 128448583505003626, guid: 7c4a0f76f5b9d4147a46046508235e74, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -71.84538
+      objectReference: {fileID: 0}
+    - target: {fileID: 2553901012791901650, guid: 7c4a0f76f5b9d4147a46046508235e74, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4917403160640543749, guid: 7c4a0f76f5b9d4147a46046508235e74, type: 3}
       propertyPath: m_Name
       value: EndGamePanelsRoot
@@ -1243,10 +1263,6 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7085243150461779126, guid: 7c4a0f76f5b9d4147a46046508235e74, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8805233230311556484, guid: 7c4a0f76f5b9d4147a46046508235e74, type: 3}
-      propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
