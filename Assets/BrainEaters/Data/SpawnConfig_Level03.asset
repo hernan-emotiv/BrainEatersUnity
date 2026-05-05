@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: SpawnConfig_Level03
   m_EditorClassIdentifier: 
   initialDelaySeconds: 1
-  spawnIntervalSeconds: 2
+  spawnIntervalSeconds: 1.5
   maxAliveEnemies: 200

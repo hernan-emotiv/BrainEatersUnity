@@ -142,17 +142,39 @@ namespace BrainEaters.Spawning
                 return null;
             }
 
-            int startIndex = Random.Range(0, enemyTypes.Count);
+            int totalWeight = 0;
             for (int i = 0; i < enemyTypes.Count; i++)
             {
-                LevelEnemyDefinition definition = enemyTypes[(startIndex + i) % enemyTypes.Count];
+                LevelEnemyDefinition definition = enemyTypes[i];
                 if (definition != null && definition.IsValid)
+                {
+                    totalWeight += definition.SpawnWeight;
+                }
+            }
+
+            if (totalWeight <= 0)
+            {
+                Debug.LogWarning("SpawnManager could not find a valid enemy definition in LevelConfig.", this);
+                return null;
+            }
+
+            int roll = Random.Range(0, totalWeight);
+            int accumulatedWeight = 0;
+            for (int i = 0; i < enemyTypes.Count; i++)
+            {
+                LevelEnemyDefinition definition = enemyTypes[i];
+                if (definition == null || !definition.IsValid)
+                {
+                    continue;
+                }
+
+                accumulatedWeight += definition.SpawnWeight;
+                if (roll < accumulatedWeight)
                 {
                     return definition;
                 }
             }
 
-            Debug.LogWarning("SpawnManager could not find a valid enemy definition in LevelConfig.", this);
             return null;
         }
 

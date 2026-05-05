@@ -6,6 +6,7 @@ namespace BrainEaters.GameFlow
     {
         public GameplayState ResultState { get; }
         public int TotalEnemiesEliminated { get; }
+        public int TotalScore { get; }
         public float DamageReceived { get; }
         public float ElapsedSeconds { get; }
         public float TargetDurationSeconds { get; }
@@ -14,6 +15,7 @@ namespace BrainEaters.GameFlow
         public GameplayReport(
             GameplayState resultState,
             int totalEnemiesEliminated,
+            int totalScore,
             float damageReceived,
             float elapsedSeconds,
             float targetDurationSeconds,
@@ -21,6 +23,7 @@ namespace BrainEaters.GameFlow
         {
             ResultState = resultState;
             TotalEnemiesEliminated = totalEnemiesEliminated;
+            TotalScore = totalScore;
             DamageReceived = damageReceived;
             ElapsedSeconds = elapsedSeconds;
             TargetDurationSeconds = targetDurationSeconds;

@@ -7,6 +7,7 @@ namespace BrainEaters.Configs
     {
         [SerializeField] private EnemyType enemyType = EnemyType.Zombie;
         [SerializeField] private string displayName = "Zombie";
+        [SerializeField] private int scoreValue = 10;
         [SerializeField] private float maxHealth = 1f;
         [SerializeField] private float moveSpeed = 3.5f;
         [SerializeField] private float turnSpeed = 540f;
@@ -23,6 +24,7 @@ namespace BrainEaters.Configs
 
         public EnemyType EnemyType => enemyType;
         public string DisplayName => string.IsNullOrWhiteSpace(displayName) ? enemyType.ToString() : displayName;
+        public int ScoreValue => scoreValue > 0 ? scoreValue : GetDefaultScoreValue(enemyType);
         public float MaxHealth => maxHealth;
         public float MoveSpeed => moveSpeed;
         public float TurnSpeed => turnSpeed;
@@ -36,5 +38,15 @@ namespace BrainEaters.Configs
         public bool UseAttackVisual => useAttackVisual;
         public Vector3 AttackHitboxHalfExtents => attackHitboxHalfExtents;
         public float DestroyDelaySeconds => destroyDelaySeconds;
+
+        private static int GetDefaultScoreValue(EnemyType type)
+        {
+            return type switch
+            {
+                EnemyType.Special => 20,
+                EnemyType.Boss => 50,
+                _ => 10
+            };
+        }
     }
 }

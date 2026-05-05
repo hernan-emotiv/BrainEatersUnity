@@ -112,6 +112,31 @@ namespace BrainEaters.EditorTools
             Debug.Log($"Upgraded onboarding gate to double doors in prefab: {PrefabPath}");
         }
 
+        [MenuItem("Brain Eaters/Onboarding/Skin Existing Bridge Popup Prefab")]
+        public static void SkinExistingBridgePopupPrefab()
+        {
+            GameObject prefabRoot = PrefabUtility.LoadPrefabContents(PrefabPath);
+            try
+            {
+                Transform panel = prefabRoot.transform.Find("MentalPowerSign/OnboardingPopupCanvas/Panel");
+                if (panel == null)
+                {
+                    Debug.LogError($"No onboarding popup panel found in {PrefabPath}.");
+                    return;
+                }
+
+                ApplyOnboardingPopupSkin(panel.gameObject);
+                PrefabUtility.SaveAsPrefabAsset(prefabRoot, PrefabPath);
+                AssetDatabase.SaveAssets();
+                AssetDatabase.Refresh();
+                Debug.Log($"Skinned onboarding popup in {PrefabPath}.", prefabRoot);
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(prefabRoot);
+            }
+        }
+
         private static GameObject CreateArena()
         {
             GameObject root = new GameObject(ArenaName);
@@ -268,10 +293,12 @@ namespace BrainEaters.EditorTools
             RectTransform panelRect = panel.AddComponent<RectTransform>();
             panelRect.anchorMin = new Vector2(0.5f, 0.5f);
             panelRect.anchorMax = new Vector2(0.5f, 0.5f);
-            panelRect.sizeDelta = new Vector2(980f, 520f);
+            panelRect.sizeDelta = new Vector2(980f, 640f);
             panelRect.anchoredPosition = Vector2.zero;
             Image panelImage = panel.AddComponent<Image>();
-            panelImage.color = new Color(0.36f, 0.18f, 0.07f, 0.96f);
+            panelImage.sprite = UiSpriteUtility.EnsureSprite(UiSpriteUtility.WoodBorderPath);
+            panelImage.color = Color.white;
+            panelImage.preserveAspect = true;
             CanvasGroup group = panel.AddComponent<CanvasGroup>();
             group.alpha = 1f;
             UiVisibilityAnimator animator = panel.AddComponent<UiVisibilityAnimator>();
@@ -281,8 +308,8 @@ namespace BrainEaters.EditorTools
             animatorSerialized.FindProperty("playOnEnable").boolValue = false;
             animatorSerialized.ApplyModifiedPropertiesWithoutUndo();
 
-            titleText = CreatePopupText(panel.transform, "Title", "Use Your Mind", 64f, FontStyles.Bold, new Vector2(0f, 150f), new Vector2(820f, 90f));
-            bodyText = CreatePopupText(panel.transform, "Body", "Charge your Mental Power, then use the Brain Bomb near the bridge lever.", 38f, FontStyles.Normal, new Vector2(0f, 25f), new Vector2(800f, 210f));
+            titleText = CreatePopupText(panel.transform, "Title", "Use Your Mind", 64f, FontStyles.Bold, new Vector2(0f, 180f), new Vector2(820f, 90f));
+            bodyText = CreatePopupText(panel.transform, "Body", "Charge your Mental Power, then use the Brain Bomb near the bridge lever.", 38f, FontStyles.Normal, new Vector2(0f, 25f), new Vector2(780f, 250f));
             bodyText.alignment = TextAlignmentOptions.Center;
 
             GameObject buttonObject = new GameObject("ContinueButton");
@@ -290,15 +317,91 @@ namespace BrainEaters.EditorTools
             RectTransform buttonRect = buttonObject.AddComponent<RectTransform>();
             buttonRect.anchorMin = new Vector2(0.5f, 0.5f);
             buttonRect.anchorMax = new Vector2(0.5f, 0.5f);
-            buttonRect.sizeDelta = new Vector2(300f, 88f);
-            buttonRect.anchoredPosition = new Vector2(0f, -180f);
+            buttonRect.sizeDelta = new Vector2(330f, 106f);
+            buttonRect.anchoredPosition = new Vector2(0f, -230f);
             Image buttonImage = buttonObject.AddComponent<Image>();
-            buttonImage.color = new Color(0.35f, 0.78f, 0.22f, 1f);
+            buttonImage.sprite = UiSpriteUtility.EnsureSprite(UiSpriteUtility.WoodButtonGreenPath);
+            buttonImage.color = Color.white;
+            buttonImage.preserveAspect = true;
             continueButton = buttonObject.AddComponent<Button>();
-            CreatePopupText(buttonObject.transform, "Label", "CONTINUE", 38f, FontStyles.Bold, Vector2.zero, new Vector2(280f, 74f));
+            continueButton.targetGraphic = buttonImage;
+            CreatePopupText(buttonObject.transform, "Label", "CONTINUE", 38f, FontStyles.Bold, Vector2.zero, new Vector2(300f, 82f));
 
             panel.SetActive(false);
             return canvasObject;
+        }
+
+        private static void ApplyOnboardingPopupSkin(GameObject panel)
+        {
+            RectTransform panelRect = panel.GetComponent<RectTransform>();
+            if (panelRect != null)
+            {
+                panelRect.sizeDelta = new Vector2(980f, 640f);
+            }
+
+            Image panelImage = panel.GetComponent<Image>();
+            if (panelImage == null)
+            {
+                panelImage = panel.AddComponent<Image>();
+            }
+
+            panelImage.sprite = UiSpriteUtility.EnsureSprite(UiSpriteUtility.WoodBorderPath);
+            panelImage.color = Color.white;
+            panelImage.preserveAspect = true;
+
+            SetChildRect(panel.transform, "Title", new Vector2(0f, 180f), new Vector2(820f, 90f));
+            SetChildRect(panel.transform, "Body", new Vector2(0f, 25f), new Vector2(780f, 250f));
+
+            Transform button = panel.transform.Find("ContinueButton");
+            if (button == null)
+            {
+                return;
+            }
+
+            RectTransform buttonRect = button.GetComponent<RectTransform>();
+            if (buttonRect != null)
+            {
+                buttonRect.sizeDelta = new Vector2(330f, 106f);
+                buttonRect.anchoredPosition = new Vector2(0f, -230f);
+            }
+
+            Image buttonImage = button.GetComponent<Image>();
+            if (buttonImage == null)
+            {
+                buttonImage = button.gameObject.AddComponent<Image>();
+            }
+
+            buttonImage.sprite = UiSpriteUtility.EnsureSprite(UiSpriteUtility.WoodButtonGreenPath);
+            buttonImage.color = Color.white;
+            buttonImage.preserveAspect = true;
+
+            Button buttonComponent = button.GetComponent<Button>();
+            if (buttonComponent != null)
+            {
+                buttonComponent.targetGraphic = buttonImage;
+            }
+
+            SetChildRect(button, "Label", Vector2.zero, new Vector2(300f, 82f));
+        }
+
+        private static void SetChildRect(Transform parent, string childName, Vector2 anchoredPosition, Vector2 sizeDelta)
+        {
+            RectTransform rect = parent.Find(childName)?.GetComponent<RectTransform>();
+            if (rect == null)
+            {
+                return;
+            }
+
+            rect.anchoredPosition = anchoredPosition;
+            rect.sizeDelta = sizeDelta;
+
+            TMP_Text text = rect.GetComponent<TMP_Text>();
+            if (text != null)
+            {
+                text.font = UiSpriteUtility.LoadHudFont();
+                text.color = Color.white;
+                text.raycastTarget = false;
+            }
         }
 
         private static TMP_Text CreatePopupText(Transform parent, string name, string text, float size, FontStyles style, Vector2 anchoredPosition, Vector2 sizeDelta)
@@ -313,6 +416,7 @@ namespace BrainEaters.EditorTools
 
             TextMeshProUGUI tmp = textObject.AddComponent<TextMeshProUGUI>();
             tmp.text = text;
+            tmp.font = UiSpriteUtility.LoadHudFont();
             tmp.fontSize = size;
             tmp.fontStyle = style;
             tmp.alignment = TextAlignmentOptions.Center;

@@ -45,6 +45,7 @@ namespace BrainEaters.EditorTools
             HeartHealthView heartHealthView = CreateHearts(bottomRightRoot);
             ProgressBarView mindPowerBar = CreateMindPower(bottomLeftRoot);
             TMP_Text timerText = CreateTimer(topRoot);
+            ConfigureObjectiveModeUi(topRoot);
             CreateKillTracker(bottomCenterRoot);
 
             SerializedObject serializedHud = new SerializedObject(hudController);
@@ -60,6 +61,29 @@ namespace BrainEaters.EditorTools
             EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
             Selection.activeGameObject = hudRoot;
             EditorGUIUtility.PingObject(hudRoot);
+        }
+
+        [MenuItem("Brain Eaters/UI/Repair Gameplay Objective Mode UI In Current Scene")]
+        public static void RepairGameplayObjectiveModeUiInCurrentScene()
+        {
+            Canvas canvas = GetOrCreateCanvas();
+            GameObject hudRoot = GetOrCreateHudRoot(canvas.transform);
+            Transform topRoot = GetOrCreateSection(hudRoot.transform, "Top").transform;
+
+            TMP_Text timerText = CreateTimer(topRoot);
+            ConfigureObjectiveModeUi(topRoot);
+
+            GameplayHudController hudController = GetOrAddComponent<GameplayHudController>(canvas.gameObject);
+            SerializedObject serializedHud = new SerializedObject(hudController);
+            serializedHud.FindProperty("gameManager").objectReferenceValue = Object.FindFirstObjectByType<GameManager>();
+            serializedHud.FindProperty("timerText").objectReferenceValue = timerText;
+            serializedHud.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(hudController);
+
+            EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
+            Selection.activeGameObject = topRoot.gameObject;
+            EditorGUIUtility.PingObject(topRoot.gameObject);
+            Debug.Log("Gameplay objective mode UI repaired. Survival shows timer, Capture shows capture progress, Collect shows collect progress.");
         }
 
         [MenuItem("Brain Eaters/UI/Delete Existing Gameplay HUD Root In Current Scene")]
@@ -178,6 +202,71 @@ namespace BrainEaters.EditorTools
             timerText.rectTransform.offsetMin = new Vector2(0f, 8f);
             timerText.rectTransform.offsetMax = new Vector2(0f, -8f);
             return timerText;
+        }
+
+        private static void ConfigureObjectiveModeUi(Transform topRoot)
+        {
+            GameObject survivalRoot = GetOrCreateUiChild(topRoot, "GameTimer");
+            GameObject captureRoot = CreateObjectiveProgressPanel(topRoot, "CaptureObjectivePanel", GameModeType.Capture, "CAPTURED");
+            GameObject collectRoot = CreateObjectiveProgressPanel(topRoot, "CollectObjectivePanel", GameModeType.Collect, "COLLECTED");
+
+            GameModeVisibilityController visibilityController = GetOrAddComponent<GameModeVisibilityController>(topRoot.gameObject);
+            SerializedObject serialized = new SerializedObject(visibilityController);
+            serialized.FindProperty("gameManager").objectReferenceValue = Object.FindFirstObjectByType<GameManager>();
+            serialized.FindProperty("survivalRoot").objectReferenceValue = survivalRoot;
+            serialized.FindProperty("captureRoot").objectReferenceValue = captureRoot;
+            serialized.FindProperty("collectRoot").objectReferenceValue = collectRoot;
+            serialized.FindProperty("fallbackRoot").objectReferenceValue = null;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(visibilityController);
+
+            GameManager gameManager = Object.FindFirstObjectByType<GameManager>();
+            GameModeType activeMode = gameManager != null ? gameManager.ActiveGameMode : GameModeType.Survival;
+            survivalRoot.SetActive(activeMode == GameModeType.Survival);
+            captureRoot.SetActive(activeMode == GameModeType.Capture);
+            collectRoot.SetActive(activeMode == GameModeType.Collect);
+        }
+
+        private static GameObject CreateObjectiveProgressPanel(Transform parent, string name, GameModeType targetMode, string title)
+        {
+            GameObject root = GetOrCreateUiChild(parent, name);
+            RectTransform rect = root.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0.5f, 1f);
+            rect.anchorMax = new Vector2(0.5f, 1f);
+            rect.pivot = new Vector2(0.5f, 1f);
+            rect.anchoredPosition = Vector2.zero;
+            rect.sizeDelta = new Vector2(334f, 104f);
+
+            Image background = GetOrAddComponent<Image>(root);
+            background.sprite = EnsureSprite(TimerBarPath);
+            background.color = Color.white;
+            background.type = Image.Type.Simple;
+            background.preserveAspect = true;
+
+            TMP_Text titleText = CreateText(root.transform, "TitleText", title, 22f, TextAlignmentOptions.Center);
+            RectTransform titleRect = titleText.rectTransform;
+            titleRect.anchorMin = new Vector2(0f, 1f);
+            titleRect.anchorMax = new Vector2(1f, 1f);
+            titleRect.pivot = new Vector2(0.5f, 1f);
+            titleRect.offsetMin = new Vector2(22f, -42f);
+            titleRect.offsetMax = new Vector2(-22f, -10f);
+
+            TMP_Text valueText = CreateText(root.transform, "ValueText", "0/0", 50f, TextAlignmentOptions.Center);
+            RectTransform valueRect = valueText.rectTransform;
+            valueRect.anchorMin = Vector2.zero;
+            valueRect.anchorMax = Vector2.one;
+            valueRect.offsetMin = new Vector2(20f, 16f);
+            valueRect.offsetMax = new Vector2(-20f, -26f);
+
+            ObjectiveProgressTextController progressTextController = GetOrAddComponent<ObjectiveProgressTextController>(root);
+            SerializedObject serialized = new SerializedObject(progressTextController);
+            serialized.FindProperty("gameManager").objectReferenceValue = Object.FindFirstObjectByType<GameManager>();
+            serialized.FindProperty("targetMode").enumValueIndex = (int)targetMode;
+            serialized.FindProperty("valueText").objectReferenceValue = valueText;
+            serialized.FindProperty("titleText").objectReferenceValue = titleText;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(progressTextController);
+            return root;
         }
 
         private static KillTrackerHudView CreateKillTracker(Transform parent)

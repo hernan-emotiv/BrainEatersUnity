@@ -10,17 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3e8eebe552bfe489ba0c269c5e3b0670, type: 3}
-  m_Name: EnemyConfig_ZombieBasic
+  m_Name: EnemyConfig_WolfBasic
   m_EditorClassIdentifier: 
-  enemyType: 0
-  displayName: Zombie
-  scoreValue: 10
+  enemyType: 2
+  displayName: Wolf
+  scoreValue: 50
   maxHealth: 1
-  moveSpeed: 0.85
-  turnSpeed: 540
+  moveSpeed: 2.25
+  turnSpeed: 440
   stopDistance: 1.25
   attackRange: 1.6
-  attackDamage: 1
+  attackDamage: 2
   attackHitDelaySeconds: 1.15
   attackDurationSeconds: 1.2
   attackCooldownSeconds: 1.9

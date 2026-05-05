@@ -145,6 +145,8 @@ namespace BrainEaters.EditorTools
             InvisibleTouchJoystick invisibleRightJoystick = FindComponentByName<InvisibleTouchJoystick>("InvisibleRightJoystick");
             TouchActionButton chargeButton = FindComponentByName<TouchActionButton>("ChargeButton");
             TouchActionButton bombButton = FindComponentByName<TouchActionButton>("BombButton");
+            ConfigureActionButtonVisualState(chargeButton != null ? chargeButton.gameObject : null);
+            ConfigureActionButtonVisualState(bombButton != null ? bombButton.gameObject : null);
             Button modeButton = FindComponentByName<Button>("ControlModeButton");
             TMP_Text modeLabel = modeButton != null ? modeButton.GetComponentInChildren<TextMeshProUGUI>(true) : null;
 
@@ -274,7 +276,40 @@ namespace BrainEaters.EditorTools
                 touchButton = Undo.AddComponent<TouchActionButton>(root);
             }
 
+            ConfigureActionButtonVisualState(root);
             return touchButton;
+        }
+
+        private static void ConfigureActionButtonVisualState(GameObject root)
+        {
+            if (root == null)
+            {
+                return;
+            }
+
+            Image image = GetOrAddImage(root);
+            image.raycastTarget = true;
+            image.color = new Color(0.12f, 0.12f, 0.12f, 0.72f);
+
+            Button button = root.GetComponent<Button>();
+            if (button == null)
+            {
+                button = Undo.AddComponent<Button>(root);
+            }
+
+            button.targetGraphic = image;
+            button.transition = Selectable.Transition.ColorTint;
+            button.interactable = true;
+
+            ColorBlock colors = button.colors;
+            colors.normalColor = new Color(1f, 1f, 1f, 1f);
+            colors.highlightedColor = new Color(0.9f, 0.9f, 0.9f, 1f);
+            colors.pressedColor = new Color(0.55f, 0.55f, 0.55f, 1f);
+            colors.selectedColor = new Color(0.9f, 0.9f, 0.9f, 1f);
+            colors.disabledColor = new Color(0.35f, 0.35f, 0.35f, 0.55f);
+            colors.colorMultiplier = 1f;
+            colors.fadeDuration = 0.08f;
+            button.colors = colors;
         }
 
         private static Button CreateModeButton(Transform parent, string name, Vector2 anchoredPosition, Vector2 size)

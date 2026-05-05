@@ -22,5 +22,10 @@ MonoBehaviour:
   enemyTypes:
   - enemyPrefab: {fileID: 9137249950666637575, guid: ae181fc9dfa4441f6b036992b8510e22, type: 3}
     enemyConfig: {fileID: 11400000, guid: bbf3e4311eb544976a8245c372744be7, type: 2}
-  - enemyPrefab: {fileID: 7890462251798360025, guid: ca9c91c80f06b4e67b1b347f7185e697, type: 3}
-    enemyConfig: {fileID: 11400000, guid: ae4e185e672a34ddcae70c0000535085, type: 2}
+    spawnWeight: 1
+  - enemyPrefab: {fileID: 9137249950666637575, guid: 411e44d420de8496883d49ea8d459e9c, type: 3}
+    enemyConfig: {fileID: 11400000, guid: 88ee296af37fc46168eaa806e128992b, type: 2}
+    spawnWeight: 4
+  - enemyPrefab: {fileID: 9137249950666637575, guid: ba4a4f2849dba46348bcd59cafcfeac4, type: 3}
+    enemyConfig: {fileID: 11400000, guid: bbf3e4311eb544976a8245c372744be7, type: 2}
+    spawnWeight: 2

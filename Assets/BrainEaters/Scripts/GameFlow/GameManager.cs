@@ -4,6 +4,7 @@ using BrainEaters.Configs;
 using BrainEaters.Player;
 using BrainEaters.Spawning;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
 namespace BrainEaters.GameFlow
@@ -31,6 +32,7 @@ namespace BrainEaters.GameFlow
         private int collectedPickupsCount;
         private readonly Dictionary<EnemyType, int> enemyKillCounts = new Dictionary<EnemyType, int>();
         private readonly Dictionary<EnemyType, string> enemyKillLabels = new Dictionary<EnemyType, string>();
+        private readonly Dictionary<EnemyType, int> enemyScoreValues = new Dictionary<EnemyType, int>();
         private bool levelRunning;
         private GameplayState currentState = GameplayState.None;
 
@@ -72,6 +74,10 @@ namespace BrainEaters.GameFlow
 
         private void Update()
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            HandleDebugEndStateShortcuts();
+#endif
+
             if (!levelRunning || levelConfig == null || currentState != GameplayState.Running)
             {
                 return;
@@ -287,6 +293,7 @@ namespace BrainEaters.GameFlow
             GameplayReport report = new GameplayReport(
                 resultState,
                 enemiesEliminated,
+                CalculateTotalScore(),
                 damageReceived,
                 elapsedSurvivalTime,
                 LevelDurationSeconds,
@@ -310,6 +317,49 @@ namespace BrainEaters.GameFlow
             LevelSession.ClearSelectedLevel();
             SceneManager.LoadScene(sceneName);
         }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        [ContextMenu("Debug/Force Win")]
+        public void DebugForceWin()
+        {
+            if (CanForceEndState())
+            {
+                EndGameplay(GameplayState.Won);
+            }
+        }
+
+        [ContextMenu("Debug/Force Lose")]
+        public void DebugForceLose()
+        {
+            if (CanForceEndState())
+            {
+                EndGameplay(GameplayState.Lost);
+            }
+        }
+
+        private void HandleDebugEndStateShortcuts()
+        {
+            Keyboard keyboard = Keyboard.current;
+            if (keyboard == null || !CanForceEndState())
+            {
+                return;
+            }
+
+            if (keyboard.f8Key.wasPressedThisFrame)
+            {
+                DebugForceWin();
+            }
+            else if (keyboard.f9Key.wasPressedThisFrame)
+            {
+                DebugForceLose();
+            }
+        }
+
+        private bool CanForceEndState()
+        {
+            return levelRunning && currentState == GameplayState.Running;
+        }
+#endif
 
         private void SetState(GameplayState newState)
         {
@@ -513,6 +563,7 @@ namespace BrainEaters.GameFlow
         {
             enemyKillCounts.Clear();
             enemyKillLabels.Clear();
+            enemyScoreValues.Clear();
 
             if (levelConfig == null)
             {
@@ -531,6 +582,7 @@ namespace BrainEaters.GameFlow
                 {
                     enemyKillCounts.Add(enemyType, 0);
                     enemyKillLabels.Add(enemyType, definition.EnemyConfig.DisplayName);
+                    enemyScoreValues.Add(enemyType, definition.EnemyConfig.ScoreValue);
                 }
             }
         }
@@ -541,11 +593,23 @@ namespace BrainEaters.GameFlow
             foreach (KeyValuePair<EnemyType, int> entry in enemyKillCounts)
             {
                 string displayName = enemyKillLabels.TryGetValue(entry.Key, out string label) ? label : entry.Key.ToString();
-                stats.Add(new GameplayKillStat(entry.Key, displayName, entry.Value));
+                int scoreValue = enemyScoreValues.TryGetValue(entry.Key, out int value) ? value : 0;
+                stats.Add(new GameplayKillStat(entry.Key, displayName, entry.Value, scoreValue));
             }
 
             stats.Sort((left, right) => left.EnemyType.CompareTo(right.EnemyType));
             return stats;
+        }
+
+        private int CalculateTotalScore()
+        {
+            int totalScore = 0;
+            foreach (GameplayKillStat stat in BuildKillStats())
+            {
+                totalScore += stat.TotalScore;
+            }
+
+            return totalScore;
         }
 
         private void HandlePlayerDamaged(float amount)
@@ -572,6 +636,7 @@ namespace BrainEaters.GameFlow
             {
                 enemyKillCounts.Add(enemyType, 0);
                 enemyKillLabels[enemyType] = enemyConfig.DisplayName;
+                enemyScoreValues[enemyType] = enemyConfig.ScoreValue;
             }
 
             enemyKillCounts[enemyType]++;

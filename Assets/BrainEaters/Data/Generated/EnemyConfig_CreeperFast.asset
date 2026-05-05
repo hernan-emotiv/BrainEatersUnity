@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   enemyType: 1
   displayName: Creeper Fast
+  scoreValue: 20
   maxHealth: 1
   moveSpeed: 4.25
   turnSpeed: 900

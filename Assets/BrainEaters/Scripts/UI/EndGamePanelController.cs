@@ -15,6 +15,8 @@ namespace BrainEaters.UI
         [SerializeField] private TMP_Text winReportText;
         [SerializeField] private TMP_Text loseTitleText;
         [SerializeField] private TMP_Text loseReportText;
+        [SerializeField] private EndGameScoreReportView winScoreReportView;
+        [SerializeField] private EndGameScoreReportView loseScoreReportView;
         [SerializeField] private Button winRetryButton;
         [SerializeField] private Button loseRetryButton;
         [SerializeField] private Button winBackToMenuButton;
@@ -101,24 +103,34 @@ namespace BrainEaters.UI
             {
                 if (winTitleText != null)
                 {
-                    winTitleText.text = "YOU SURVIVED";
+                    winTitleText.text = "VICTORY!";
                 }
 
                 if (winReportText != null)
                 {
                     winReportText.text = reportText;
                 }
+
+                if (winScoreReportView != null)
+                {
+                    winScoreReportView.SetReport(report);
+                }
             }
             else
             {
                 if (loseTitleText != null)
                 {
-                    loseTitleText.text = "YOU WERE OVERWHELMED";
+                    loseTitleText.text = "GAME OVER";
                 }
 
                 if (loseReportText != null)
                 {
                     loseReportText.text = reportText;
+                }
+
+                if (loseScoreReportView != null)
+                {
+                    loseScoreReportView.SetReport(report);
                 }
             }
         }
@@ -138,9 +150,10 @@ namespace BrainEaters.UI
 
             foreach (GameplayKillStat killStat in report.KillStats)
             {
-                builder.AppendLine($"{killStat.DisplayName}: {killStat.Count}");
+                builder.AppendLine($"{killStat.DisplayName}: {killStat.Count} x {killStat.ScoreValue} = {killStat.TotalScore}");
             }
 
+            builder.AppendLine($"Score: {report.TotalScore}");
             builder.AppendLine($"Damage Received: {report.DamageReceived:0}");
             builder.Append($"Time Survived: {FormatTime(report.ElapsedSeconds)} / {FormatTime(report.TargetDurationSeconds)}");
             return builder.ToString();
@@ -242,12 +255,14 @@ namespace BrainEaters.UI
                 winPanel,
                 ref winTitleText,
                 ref winReportText,
+                ref winScoreReportView,
                 ref winRetryButton,
                 ref winBackToMenuButton);
             ResolvePanelReferences(
                 losePanel,
                 ref loseTitleText,
                 ref loseReportText,
+                ref loseScoreReportView,
                 ref loseRetryButton,
                 ref loseBackToMenuButton);
         }
@@ -256,6 +271,7 @@ namespace BrainEaters.UI
             GameObject panel,
             ref TMP_Text titleText,
             ref TMP_Text reportText,
+            ref EndGameScoreReportView scoreReportView,
             ref Button retryButton,
             ref Button backToMenuButton)
         {
@@ -267,6 +283,7 @@ namespace BrainEaters.UI
             Transform panelTransform = panel.transform;
             titleText ??= panelTransform.Find("TitleText")?.GetComponent<TMP_Text>();
             reportText ??= panelTransform.Find("ReportText")?.GetComponent<TMP_Text>();
+            scoreReportView ??= panel.GetComponentInChildren<EndGameScoreReportView>(true);
             retryButton ??= panelTransform.Find("RetryButton")?.GetComponent<Button>();
             backToMenuButton ??= panelTransform.Find("BackToMenuButton")?.GetComponent<Button>();
         }

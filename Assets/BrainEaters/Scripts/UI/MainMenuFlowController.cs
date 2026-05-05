@@ -42,19 +42,13 @@ namespace BrainEaters.UI
 
         public void HandlePlayPressed()
         {
-            if (LevelProgressionService.IsFirstLevelCompleted(campaignConfig))
-            {
-                ShowLevelSelect();
-                return;
-            }
-
             if (!HasSeenTutorial())
             {
                 ShowTutorial();
                 return;
             }
 
-            StartFirstLevel();
+            ShowLevelSelect();
         }
 
         public void ShowLevelSelect()
@@ -84,7 +78,7 @@ namespace BrainEaters.UI
         public void StartFromTutorial()
         {
             MarkTutorialSeen();
-            StartFirstLevel();
+            ShowLevelSelect();
         }
 
         public void StartFirstLevel()
