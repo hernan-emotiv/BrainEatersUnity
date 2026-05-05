@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using BrainEaters.Core;
+using BrainEaters.Enemies;
 using UnityEngine;
 
 namespace BrainEaters.Player
@@ -12,6 +13,11 @@ namespace BrainEaters.Player
         [SerializeField] private float damage = 999f;
         [SerializeField] private float cooldownSeconds = 0.75f;
         [SerializeField] private LayerMask hitMask = ~0;
+        [SerializeField] private bool launchEnemiesOnHit = true;
+        [SerializeField] private float enemyLaunchForce = 10f;
+        [SerializeField] private float enemyLaunchUpwardForce = 4.5f;
+        [SerializeField] private float enemyLaunchTorque = 7f;
+        [SerializeField] private float enemyLaunchKillDelaySeconds = 0.75f;
 
         private readonly HashSet<IDamageable> processedTargets = new HashSet<IDamageable>();
         private readonly HashSet<IBombActivatable> processedActivatables = new HashSet<IBombActivatable>();
@@ -79,7 +85,11 @@ namespace BrainEaters.Player
                     continue;
                 }
 
-                damageable.ApplyDamage(damage);
+                if (!TryLaunchEnemy(hit))
+                {
+                    damageable.ApplyDamage(damage);
+                }
+
                 hitCount++;
             }
 
@@ -90,6 +100,39 @@ namespace BrainEaters.Player
             }
 
             Debug.Log($"Bomb triggered. Targets hit: {hitCount}. Activatables triggered: {activationCount}.", this);
+            return true;
+        }
+
+        private bool TryLaunchEnemy(Collider hit)
+        {
+            if (!launchEnemiesOnHit || hit == null)
+            {
+                return false;
+            }
+
+            EnemyPhysicsLaunch launcher = hit.GetComponentInParent<EnemyPhysicsLaunch>();
+            EnemyHealth enemyHealth = hit.GetComponentInParent<EnemyHealth>();
+            if (enemyHealth == null)
+            {
+                return false;
+            }
+
+            if (launcher == null)
+            {
+                launcher = enemyHealth.gameObject.AddComponent<EnemyPhysicsLaunch>();
+            }
+
+            Vector3 launchDirection = enemyHealth.transform.position - attackOrigin.position;
+            launchDirection.y = 0f;
+            if (launchDirection.sqrMagnitude < 0.0001f)
+            {
+                launchDirection = attackOrigin.forward;
+            }
+
+            launchDirection.Normalize();
+            Vector3 force = launchDirection * enemyLaunchForce + Vector3.up * enemyLaunchUpwardForce;
+            Vector3 torque = Random.onUnitSphere * enemyLaunchTorque;
+            launcher.LaunchAndKill(force, torque, enemyLaunchKillDelaySeconds);
             return true;
         }
 

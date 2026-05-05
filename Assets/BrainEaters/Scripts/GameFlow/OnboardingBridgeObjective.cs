@@ -44,6 +44,23 @@ namespace BrainEaters.GameFlow
             CacheInitialState();
         }
 
+        private void OnEnable()
+        {
+            ResolveReferences();
+            if (gateTarget != null)
+            {
+                gateTarget.Destroyed += HandleGateDestroyed;
+            }
+        }
+
+        private void OnDisable()
+        {
+            if (gateTarget != null)
+            {
+                gateTarget.Destroyed -= HandleGateDestroyed;
+            }
+        }
+
         private void OnValidate()
         {
             ResolveReferences();
@@ -115,6 +132,27 @@ namespace BrainEaters.GameFlow
             }
         }
 
+        private void HandleGateDestroyed()
+        {
+            if (hasActivated)
+            {
+                return;
+            }
+
+            hasActivated = true;
+            if (activationIndicator != null)
+            {
+                activationIndicator.gameObject.SetActive(false);
+            }
+
+            if (activationRoutine != null)
+            {
+                StopCoroutine(activationRoutine);
+            }
+
+            activationRoutine = StartCoroutine(OpenGate());
+        }
+
         private IEnumerator PlayActivation()
         {
             if (launchDelaySeconds > 0f)
@@ -172,7 +210,7 @@ namespace BrainEaters.GameFlow
 
             if (gateTarget != null)
             {
-                gateTarget.DisableTarget();
+                gateTarget.DisableTarget(!hasActivated);
             }
 
             bool hasDoorPivots = leftGatePivot != null || rightGatePivot != null;

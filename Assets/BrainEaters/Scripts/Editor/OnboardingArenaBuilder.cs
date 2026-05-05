@@ -137,6 +137,53 @@ namespace BrainEaters.EditorTools
             }
         }
 
+        [MenuItem("Brain Eaters/Onboarding/Repair Bridge Gate Damage Feedback Prefab")]
+        public static void RepairBridgeGateDamageFeedbackPrefab()
+        {
+            GameObject prefabRoot = PrefabUtility.LoadPrefabContents(PrefabPath);
+            try
+            {
+                GameObject gate = FindChild(prefabRoot.transform, "ClosedGate");
+                if (gate == null)
+                {
+                    Debug.LogError($"No ClosedGate found in {PrefabPath}.");
+                    return;
+                }
+
+                ConfigureGateDamageFeedback(gate);
+                PrefabUtility.SaveAsPrefabAsset(prefabRoot, PrefabPath);
+                AssetDatabase.SaveAssets();
+                AssetDatabase.Refresh();
+                Debug.Log($"Repaired bridge gate damage feedback in prefab: {PrefabPath}", prefabRoot);
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(prefabRoot);
+            }
+        }
+
+        [MenuItem("Brain Eaters/Onboarding/Repair Bridge Gate Damage Feedback In Current Scene")]
+        public static void RepairBridgeGateDamageFeedbackInCurrentScene()
+        {
+            GameObject gate = FindGateInCurrentScene();
+            if (gate == null)
+            {
+                Debug.LogError("No ClosedGate found in the current scene. Select the onboarding arena or a child of it, then run this again.");
+                return;
+            }
+
+            ConfigureGateDamageFeedback(gate);
+            RepairBridgeObjectiveReferences(gate);
+
+            EditorUtility.SetDirty(gate);
+            EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
+
+            Transform leftPivot = gate.transform.Find("LeftDoorPivot");
+            Selection.activeGameObject = leftPivot != null ? leftPivot.gameObject : gate;
+            EditorGUIUtility.PingObject(Selection.activeGameObject);
+            Debug.Log("Repaired bridge gate damage feedback in the current scene. Vibration components are on LeftDoorPivot and RightDoorPivot.", gate);
+        }
+
         private static GameObject CreateArena()
         {
             GameObject root = new GameObject(ArenaName);
@@ -222,7 +269,7 @@ namespace BrainEaters.EditorTools
             TurretHealth turretHealth = gate.AddComponent<TurretHealth>();
             SerializedObject turretSerialized = new SerializedObject(turretHealth);
             turretSerialized.FindProperty("targetableWhenOnline").boolValue = true;
-            turretSerialized.FindProperty("maxHealth").floatValue = 9999f;
+            turretSerialized.FindProperty("maxHealth").floatValue = 30f;
             turretSerialized.FindProperty("targetPoint").objectReferenceValue = targetPoint.transform;
             turretSerialized.ApplyModifiedPropertiesWithoutUndo();
 
@@ -234,7 +281,115 @@ namespace BrainEaters.EditorTools
             feedbackRoots.GetArrayElementAtIndex(0).objectReferenceValue = leftPivot;
             feedbackRoots.GetArrayElementAtIndex(1).objectReferenceValue = rightPivot;
             targetSerialized.ApplyModifiedPropertiesWithoutUndo();
+            ConfigureGateDamageFeedback(gate);
             return gate;
+        }
+
+        private static void ConfigureGateDamageFeedback(GameObject gate)
+        {
+            if (gate == null)
+            {
+                return;
+            }
+
+            TurretHealth turretHealth = gate.GetComponent<TurretHealth>();
+            if (turretHealth != null)
+            {
+                SerializedObject turretSerialized = new SerializedObject(turretHealth);
+                turretSerialized.FindProperty("targetableWhenOnline").boolValue = true;
+                turretSerialized.FindProperty("maxHealth").floatValue = 30f;
+                Transform targetPoint = gate.transform.Find("TargetPoint");
+                if (targetPoint != null)
+                {
+                    turretSerialized.FindProperty("targetPoint").objectReferenceValue = targetPoint;
+                }
+
+                turretSerialized.ApplyModifiedPropertiesWithoutUndo();
+            }
+
+            ConfigureDoorVibration(gate.transform.Find("LeftDoorPivot"), turretHealth);
+            ConfigureDoorVibration(gate.transform.Find("RightDoorPivot"), turretHealth);
+        }
+
+        private static void RepairBridgeObjectiveReferences(GameObject gate)
+        {
+            OnboardingBridgeObjective objective = Object.FindFirstObjectByType<OnboardingBridgeObjective>();
+            if (objective == null)
+            {
+                return;
+            }
+
+            Transform arenaRoot = gate.transform.root;
+            Transform bridgePivot = FindChild(arenaRoot, "BridgePivot")?.transform;
+            OnboardingBridgeLaunchZone launchZone = Object.FindFirstObjectByType<OnboardingBridgeLaunchZone>();
+            Transform activationIndicator = FindChild(arenaRoot, "MentalBombLeverIndicator")?.transform;
+            ConfigureBridgeObjective(
+                objective,
+                bridgePivot,
+                gate.transform,
+                gate.GetComponent<Collider>(),
+                gate.GetComponent<OnboardingGateTarget>(),
+                launchZone,
+                activationIndicator);
+
+            EditorUtility.SetDirty(objective);
+        }
+
+        private static GameObject FindGateInCurrentScene()
+        {
+            Transform selectedTransform = Selection.activeTransform;
+            while (selectedTransform != null)
+            {
+                if (selectedTransform.name == "ClosedGate")
+                {
+                    return selectedTransform.gameObject;
+                }
+
+                Transform nestedGate = selectedTransform.Find("ClosedGate");
+                if (nestedGate != null)
+                {
+                    return nestedGate.gameObject;
+                }
+
+                selectedTransform = selectedTransform.parent;
+            }
+
+            GameObject arena = GameObject.Find(ArenaName);
+            if (arena != null)
+            {
+                GameObject gate = FindChild(arena.transform, "ClosedGate");
+                if (gate != null)
+                {
+                    return gate;
+                }
+            }
+
+            OnboardingGateTarget gateTarget = Object.FindFirstObjectByType<OnboardingGateTarget>();
+            return gateTarget != null ? gateTarget.gameObject : null;
+        }
+
+        private static void ConfigureDoorVibration(Transform doorPivot, TurretHealth turretHealth)
+        {
+            if (doorPivot == null)
+            {
+                return;
+            }
+
+            OnboardingGateVibrationFeedback feedback = doorPivot.GetComponent<OnboardingGateVibrationFeedback>();
+            if (feedback == null)
+            {
+                feedback = Undo.AddComponent<OnboardingGateVibrationFeedback>(doorPivot.gameObject);
+            }
+
+            SerializedObject serialized = new SerializedObject(feedback);
+            serialized.FindProperty("targetHealth").objectReferenceValue = turretHealth;
+            serialized.FindProperty("visualRoot").objectReferenceValue = doorPivot;
+            serialized.FindProperty("duration").floatValue = 0.22f;
+            serialized.FindProperty("positionAmplitude").floatValue = 0.045f;
+            serialized.FindProperty("rotationAmplitude").floatValue = 3.5f;
+            serialized.FindProperty("frequency").floatValue = 42f;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(feedback);
         }
 
         private static Transform CreateLever(Transform parent, Material material)

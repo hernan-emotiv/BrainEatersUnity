@@ -6,11 +6,12 @@ namespace BrainEaters.GameFlow
 {
     public class OnboardingGateTarget : MonoBehaviour
     {
+        public event System.Action Destroyed;
+
         [SerializeField] private TurretHealth targetHealth;
         [SerializeField] private Transform[] feedbackRoots = System.Array.Empty<Transform>();
         [SerializeField] private float hitWobbleAngle = 13f;
         [SerializeField] private float hitWobbleDuration = 0.28f;
-        [SerializeField] private float hitWobbleFrequency = 20f;
         [SerializeField] private float hitRecoilAngle = 3f;
 
         private Quaternion[] baseRotations = System.Array.Empty<Quaternion>();
@@ -29,6 +30,7 @@ namespace BrainEaters.GameFlow
             if (targetHealth != null)
             {
                 targetHealth.Damaged += HandleTargetDamaged;
+                targetHealth.Destroyed += HandleTargetDestroyed;
             }
         }
 
@@ -37,6 +39,7 @@ namespace BrainEaters.GameFlow
             if (targetHealth != null)
             {
                 targetHealth.Damaged -= HandleTargetDamaged;
+                targetHealth.Destroyed -= HandleTargetDestroyed;
             }
         }
 
@@ -58,11 +61,11 @@ namespace BrainEaters.GameFlow
             }
         }
 
-        public void DisableTarget()
+        public void DisableTarget(bool resetHealth = true)
         {
             if (targetHealth != null)
             {
-                targetHealth.SetOnlineState(false);
+                targetHealth.SetOnlineState(false, resetHealth);
             }
         }
 
@@ -74,6 +77,17 @@ namespace BrainEaters.GameFlow
             }
 
             feedbackRoutine = StartCoroutine(PlayHitFeedback());
+        }
+
+        private void HandleTargetDestroyed(TurretHealth _)
+        {
+            if (feedbackRoutine != null)
+            {
+                StopCoroutine(feedbackRoutine);
+                feedbackRoutine = null;
+            }
+
+            Destroyed?.Invoke();
         }
 
         private IEnumerator PlayHitFeedback()

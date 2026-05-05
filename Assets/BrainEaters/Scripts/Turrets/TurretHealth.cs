@@ -9,6 +9,8 @@ namespace BrainEaters.Turrets
         [SerializeField] private bool targetableWhenOnline = true;
         [SerializeField] private float maxHealth = 6f;
         [SerializeField] private Transform targetPoint;
+        [SerializeField] private float debugCurrentHealth;
+        [SerializeField] private bool debugIsTargetable;
 
         public event Action<TurretHealth> Destroyed;
         public event Action<float> Damaged;
@@ -48,10 +50,12 @@ namespace BrainEaters.Turrets
             }
 
             CurrentHealth = Mathf.Max(0f, CurrentHealth - amount);
+            SyncDebugState();
             Damaged?.Invoke(amount);
             if (CurrentHealth <= 0f)
             {
                 IsDestroyed = true;
+                SyncDebugState();
                 UpdateRegistry();
                 Destroyed?.Invoke(this);
             }
@@ -62,18 +66,20 @@ namespace BrainEaters.Turrets
             CurrentHealth = maxHealth;
             IsDestroyed = false;
             IsOnline = false;
+            SyncDebugState();
             UpdateRegistry();
         }
 
-        public void SetOnlineState(bool online)
+        public void SetOnlineState(bool online, bool resetWhenOffline = true)
         {
             IsOnline = online;
-            if (!online)
+            if (!online && resetWhenOffline)
             {
                 CurrentHealth = maxHealth;
                 IsDestroyed = false;
             }
 
+            SyncDebugState();
             UpdateRegistry();
         }
 
@@ -87,6 +93,12 @@ namespace BrainEaters.Turrets
                     targetPoint = explicitTargetPoint;
                 }
             }
+        }
+
+        private void SyncDebugState()
+        {
+            debugCurrentHealth = CurrentHealth;
+            debugIsTargetable = IsTargetable;
         }
 
         private void UpdateRegistry()
