@@ -19,6 +19,7 @@ namespace BrainEaters.Input
         [SerializeField] private PlayerInputRouter playerInputRouter;
         [SerializeField] private KeyboardMouseInputSource keyboardMouseInputSource;
         [SerializeField] private MobileGameplayInputSource mobileGameplayInputSource;
+        [SerializeField] private MonoBehaviour inputSourceOverride;
         [SerializeField] private CameraFollow cameraFollow;
 
         private bool useMobileControls;
@@ -121,6 +122,17 @@ namespace BrainEaters.Input
 
             if (playerInputRouter == null)
             {
+                return;
+            }
+
+            if (inputSourceOverride != null)
+            {
+                playerInputRouter.SetInputSource(inputSourceOverride);
+                if (cameraFollow != null)
+                {
+                    cameraFollow.SetControlMode(useMobileControls ? currentControlMode : MobileControlMode.DualJoystick);
+                }
+
                 return;
             }
 

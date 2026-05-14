@@ -49,5 +49,8 @@ Thumbs.db
 Assets/AssetStoreTools*
 Assets/Plugins/Editor/JetBrains*
 
+# Local external repositories used for analysis
+External/
+
 # Addressables
 ServerData/
