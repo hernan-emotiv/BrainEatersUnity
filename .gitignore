@@ -52,5 +52,10 @@ Assets/Plugins/Editor/JetBrains*
 # Local external repositories used for analysis
 External/
 
+# Local Cortex SDK credentials. Unity serializes this ScriptableObject as
+# plaintext YAML, including ClientSecret.
+Assets/Settings/EmotivCortexSettings.asset
+Assets/Settings/EmotivCortexSettings.asset.meta
+
 # Addressables
 ServerData/
